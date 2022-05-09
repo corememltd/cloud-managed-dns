@@ -35,7 +35,7 @@ The contents of this file should describe your selected subscription and the ten
 
 # Deploy
 
-## Authorative DNS (Cloud)
+## Authoritative DNS (Cloud)
 
     make deploy-authoritative DOMAIN=example.com LOCATION=uksouth SIZE=Standard_B1ls2
 
