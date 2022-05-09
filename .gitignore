@@ -1,0 +1,8 @@
+.*
+!.gitignore
+
+*.zip
+packer
+terraform
+
+account.json
