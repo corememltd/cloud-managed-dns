@@ -305,9 +305,9 @@ resource "azurerm_private_dns_zone_virtual_network_link" "example" {
 output "nameservers" {
   value = azurerm_dns_zone.main.name_servers
 }
-output "proxy-ipv4" {
-  value = azurerm_public_ip.ipv4[*].ip_address
-}
 output "proxy-ipv6" {
   value = azurerm_public_ip.ipv6[*].ip_address
+}
+output "proxy-ipv4" {
+  value = azurerm_public_ip.ipv4[*].ip_address
 }
