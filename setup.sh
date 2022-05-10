@@ -21,10 +21,9 @@ server:
     access-control: ::1 allow_snoop
 EOF
 
-# must use forward-zone as stub-zone turns off RD and upstream returns REFUSED
+# https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#term-domain-insecure-domain-name
 # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#term-local-zone-zone-type
 # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#forward-zone-options
-# https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#stub-zone-options
 cat <<'EOF' > "/opt/$VENDOR/$PROJECT/services/unbound/unbound.conf.d/zone.conf"
 server:
     domain-insecure: "soas.ac.uk."
@@ -32,6 +31,7 @@ server:
     local-zone: "." always_refuse
     local-zone: "soas.ac.uk." always_transparent
 
+# must use forward-zone as stub-zone turns off RD and upstream returns REFUSED
 forward-zone:
     name: soas.ac.uk
     forward-no-cache: yes
