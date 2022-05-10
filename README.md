@@ -18,6 +18,7 @@ You will require pre-installed:
      * have access to the Azure subscription you wish to deploy to
  * `make`
  * `unzip`
+ * [`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`](https://www.cyberciti.biz/faq/how-to-set-up-ssh-keys-on-linux-unix/)
 
 Start by logging into Azure via the CLI by running:
 
@@ -33,23 +34,32 @@ Pin the deployment to the [subscription of your choosing](https://docs.microsoft
 
 The contents of this file should describe your selected subscription and the tenant it is part of.
 
+Using the example configuration file as a template:
+
+    cp setup.tfvars.example setup.tfvars
+
+Now edit `setup.tfvars` to set at least the following to your needs:
+
+ * `domain`
+ * `allowed_ips`
+     * this must encompass at least the (public) IPs of your on-premises DNS resolvers
+
 # Deploy
 
 ## Authoritative DNS (Cloud)
 
-    make deploy-authoritative DOMAIN=example.com LOCATION=uksouth SIZE=Standard_B1ls2
+    make deploy-authoritative
 
-Where:
+**N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform with `plan` instead of `apply`
 
- * **`DOMAIN` (required):** domain you are hosting
- * **`LOCATION` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
- * **`SIZE` (default: `Standard_B1ls2`):** [size of VM instance to use](https://docs.microsoft.com/azure/virtual-machines/sizes)
- * **`DRYRUN`:** if set to any value will run Terraform with `plan` instead of `apply`
-
-## Recursive DNS (On-Premise)
+## Recursive DNS (On-Premises)
 
 ...
 
 # Usage and Testing
+
+...
+
+# Decommisioning
 
 ...

@@ -5,4 +5,7 @@
 packer
 terraform
 
+terraform.tfstate*
+
+setup.tfvars
 account.json

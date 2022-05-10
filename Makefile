@@ -16,15 +16,6 @@ endef
 $(eval $(call BUILD_FLAGS_template,vendor,$(VENDOR)))
 $(eval $(call BUILD_FLAGS_template,project,$(PROJECT)))
 $(eval $(call BUILD_FLAGS_template,commit,$(COMMITID)))
-ifneq ($(DOMAIN),)
-$(eval $(call BUILD_FLAGS_template,domain,$(DOMAIN)))
-endif
-ifneq ($(LOCATION),)
-$(eval $(call BUILD_FLAGS_template,location,$(LOCATION)))
-endif
-ifneq ($(SIZE),)
-$(eval $(call BUILD_FLAGS_template,size,$(SIZE)))
-endif
 
 KERNEL = $(shell uname -s | tr A-Z a-z)
 MACHINE = $(shell uname -m)
@@ -57,13 +48,11 @@ endif
 endif
 
 .PHONY: deploy-authoritative
-deploy-authoritative: setup.tf .stamp.terraform
-ifeq ($(DOMAIN),)
-	@{ echo 'you must set DOMAIN as per the README.md' >&2; exit 1; }
-endif
-	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS)
+deploy-authoritative: setup.tf setup.tfvars $(HOME)/.ssh/id_rsa.pub .stamp.terraform
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars -auto-approve -target random_shuffle.zones
+	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
 
-account.json:
+$(HOME)/.ssh/id_rsa.pub setup.tfvars account.json:
 	@{ echo 'missing $@, create it as described in the README.md' >&2; exit 1; }
 
 .stamp.terraform: setup.tf terraform account.json
