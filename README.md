@@ -57,6 +57,30 @@ Now edit `setup.tfvars` to set at least the following to your needs:
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform with `plan` instead of `apply`
 
+When the process completes (first run will take at least ten minutes), you will be [returned output](https://www.terraform.io/language/values/outputs) that resembles the *example* below:
+
+    nameservers = toset([
+      "nsA-0Y.azure-dns.com.",
+      "nsB-0Y.azure-dns.net.",
+      "nsC-0Y.azure-dns.org.",
+      "nsD-0Y.azure-dns.info.",
+    ])
+    proxy-ipv6 = [
+      "2001:db8:100:8::43",
+      "2001:db8:100:8::2e",
+    ]
+    proxy-ipv4 = [
+      "192.0.2.4",
+      "192.0.2.79",
+    ]
+
+Where:
+
+ * **`nameservers`:** nameservers to use when going live for your domain
+     * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
+ * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
+     * first IPv4 and first IPv6 address listed is assigned to the first poxy resolver, the second set to the second proxy resolver
+
 ## Recursive DNS (On-Premises)
 
 ...
