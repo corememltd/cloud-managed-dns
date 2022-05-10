@@ -94,7 +94,7 @@ Where:
 
 ## Security
 
-You should not need to ever log into the proxy resolvers but as they are configured with a temporary SSH public key you should perform the following steps on each system:
+You should not need to ever log into the proxy resolvers but as they are configured with a temporary SSH public key (`id_rsa` and `id_rsa.pub` would have been automatically created for you at the top of the project directory) you should perform the following steps on each system:
 
  1. SSH into the server (from within the project directory) with:
 
@@ -116,10 +116,10 @@ To use this you will need a copy of your zone file and at least the public view,
 
     dig AXFR @192.0.2.1 example.invalid | tee example.invalid.axfr
 
-Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters):
+Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the view you are importing:
 
- * public: `az network dns zone import -g DNS -n example.invalid -f example.invalid.axfr
- * private: `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
+ * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
+ * private : `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
 
 Once you have imported the records, you sohuld be able to test them as detailed below.
 
@@ -129,13 +129,35 @@ Once you have imported the records, you sohuld be able to test them as detailed 
 
 # Usage and Testing
 
-To check the proxy resolvers are working (they may take a few minutes to start for the first time) you run the following command from one of the IP addresses you listed in `allowed_ips` earlier:
+This section will walk you through testing your service before putting it into production.
+
+Points to be aware of:
+
+ * records in the private view take precedence over the records in the public view
+     * externally, if a record exists in the private view but not public, then the response will be `NXDOMAIN`
+     * externally, if a record exists in both the private and public views, then the response will be the public one
+     * internally, if a record exists in the private view but not public, then the response will be the private one
+     * internally, if a record exists in both the private and public views, then the response will be the private one
+ * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
+     * so not `192.168.0.0/16` or `fc00::/7`
+
+## Public
+
+Once you have populated your public zone, then you should be able to see your expected result for it with:
+
+    dig @nsA-0Y.azure-dns.com server.example.invalid
+
+Where `nsA-0Y.azure-dns.com` is one of the entries from the `nameservers` output produced earlier.
+
+## Private
+
+First check that the proxy resolvers are working (they may take a few minutes to start for the first time) by running the following command from a workstation holding one of the IP addresses you listed in `allowed_ips` earlier in `setup.tfvars`:
 
     dig @192.0.2.4 SOA example.invalid
 
 Where `192.0.2.4` is one of the IPs return earlier in `proxy-ipv6` and `proxy-ipv4`.
 
-The output should look like the following, where if you see `azureprivatedns.net.` then everything is working.
+The output should look like the following, where if you see `azureprivatedns.net.` then everything is working:
 
     ; <<>> DiG 9.16.27-Debian <<>> @192.0.2.4 SOA example.invalid
     ; (1 server found)
@@ -157,7 +179,30 @@ The output should look like the following, where if you see `azureprivatedns.net
     ;; WHEN: Tue May 10 16:09:27 BST 2022
     ;; MSG SIZE  rcvd: 128
 
-...
+If it does not work:
+
+  * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in `allowed_ips` using:
+
+        dig CH TXT whoami.cloudflare @1.1.1.1
+        dig CH TXT whoami.cloudflare @2606:4700:4700::1111
+
+  * check that a local firewall is not blocking you directing querying non-local DNS servers
+
+  * check there were no deployment errors, if there were, retry that process until there are no errors
+
+If you have populated your private zone, then you should be able to see your expected result for it with:
+
+    dig @192.0.2.4 server.example.invalid
+
+**N.B.** any query not for your domain the proxy will return a `REFUSED` status and no results.
+
+### From the Proxy
+
+If you are SSHed into the proxy resolver, you instead would use:
+
+    dig @168.63.129.16 server.example.invalid
+
+**N.B.** do not change [`168.63.129.16` as it is Azures DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
 
 # Decommisioning
 
