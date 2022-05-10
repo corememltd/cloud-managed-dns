@@ -96,7 +96,7 @@ Where:
 
 You should not need to ever log into the proxy resolvers but as they are configured with a temporary SSH public key you should perform the following steps on each system:
 
- 1. SSH into the server with:
+ 1. SSH into the server (from within the project directory) with:
 
         ssh -i id_rsa ubuntu@192.0.2.1
 
