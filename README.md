@@ -16,14 +16,23 @@ This project currently requires that you are using it on one of the following Op
  * [Debian](https://debian.org/) 11 (bullseye) - tested
  * [Ubuntu](https://ubuntu.com/) 20.04 (focal) and later
  * [Microsoft WSL 2](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+ * macOS
 
 You will require pre-installed:
 
  * [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/)
      * have access to the Azure subscription you wish to deploy to
- * `make`
+ * `curl`
+ * `dig` - part of the Debian/Ubuntu `bind9-dnsutils` package
+ * `git`
+ * `gmake` - GNU `make`
+ * `ssh`
  * `unzip`
- * [`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`](https://www.cyberciti.biz/faq/how-to-set-up-ssh-keys-on-linux-unix/)
+
+Check out this project and enter the project directory with:
+
+    git clone https://gitlab.com/coremem/cloud-managed-dns.git
+    cd cloud-managed-dns
 
 Start by logging into Azure via the CLI by running:
 
@@ -53,9 +62,9 @@ Now edit `setup.tfvars` to set at least the following to your needs:
 
 ## Authoritative DNS (Cloud)
 
-    make deploy-authoritative
+    gmake deploy-authoritative
 
-**N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform with `plan` instead of `apply`
+**N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
 
 When the process completes (first run will take at least ten minutes), you will be [returned output](https://www.terraform.io/language/values/outputs) that resembles the *example* below:
 
@@ -80,12 +89,73 @@ Where:
      * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
  * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
      * first IPv4 and first IPv6 address listed is assigned to the first poxy resolver, the second set to the second proxy resolver
+     * these IPs are used by your on-premises resolvers to gain access to the private view of your zone
+     * you should be able to SSH into these systems using:
+
+## Security
+
+You should not need to ever log into the proxy resolvers but as they are configured with a temporary SSH public key you should perform the following steps on each system:
+
+ 1. SSH into the server with:
+
+        ssh -i id_rsa ubuntu@192.0.2.1
+
+ 1. create user accounts for yourself and anyone else who will be administrating the system
+
+ 1. make sure you can log into the system (and gain `root` via `sudo -s`) using at least one of those accounts
+
+ 1. delete the `ubuntu` account by running on the system
+
+        sudo userdel -r ubuntu
+
+## Importing
+
+You now need to populate your Azure DNS resources with records. You can do this manually via the web portal or CLI, but it is far more reliable where possible to use the Azure zone importing functionality built into the CLI tool.
+
+To use this you will need a copy of your zone file and at least the public view, if not private one too. If you do not have traditional BIND zone files, your existing authoritative DNS server (check the vendor documentation!) should let you generate one via an AXFR query using something like:
+
+    dig AXFR @192.0.2.1 example.invalid | tee example.invalid.axfr
+
+Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters):
+
+ * public: `az network dns zone import -g DNS -n example.invalid -f example.invalid.axfr
+ * private: `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
+
+Once you have imported the records, you sohuld be able to test them as detailed below.
 
 ## Recursive DNS (On-Premises)
 
 ...
 
 # Usage and Testing
+
+To check the proxy resolvers are working (they may take a few minutes to start for the first time) you run the following command from one of the IP addresses you listed in `allowed_ips` earlier:
+
+    dig @192.0.2.4 SOA example.invalid
+
+Where `192.0.2.4` is one of the IPs return earlier in `proxy-ipv6` and `proxy-ipv4`.
+
+The output should look like the following, where if you see `azureprivatedns.net.` then everything is working.
+
+    ; <<>> DiG 9.16.27-Debian <<>> @192.0.2.4 SOA example.invalid
+    ; (1 server found)
+    ;; global options: +cmd
+    ;; Got answer:
+    ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 23510
+    ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+    
+    ;; OPT PSEUDOSECTION:
+    ; EDNS: version: 0, flags:; udp: 1232
+    ;; QUESTION SECTION:
+    ;example.invalid.                    IN      SOA
+    
+    ;; ANSWER SECTION:
+    example.invalid.             1800    IN      SOA     azureprivatedns.net. azureprivatedns-host.microsoft.com. 1 3600 300 2419200 10
+    
+    ;; Query time: 36 msec
+    ;; SERVER: 192.0.2.4#53(192.0.2.4)
+    ;; WHEN: Tue May 10 16:09:27 BST 2022
+    ;; MSG SIZE  rcvd: 128
 
 ...
 

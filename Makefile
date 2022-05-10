@@ -48,14 +48,18 @@ endif
 endif
 
 .PHONY: deploy-authoritative
-deploy-authoritative: setup.tf setup.tfvars $(HOME)/.ssh/id_rsa.pub .stamp.terraform
+deploy-authoritative: setup.tf setup.tfvars .id_rsa.pub .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars -auto-approve -target random_shuffle.zones
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
 
-$(HOME)/.ssh/id_rsa.pub setup.tfvars account.json:
+.id_rsa.pub:
+	ssh-keygen -q -t rsa -N '' -f $@
+CLEAN += id_rsa id_rsa.pub
+
+setup.tfvars account.json:
 	@{ echo 'missing $@, create it as described in the README.md' >&2; exit 1; }
 
-.stamp.terraform: setup.tf terraform account.json
+.stamp.terraform: setup.tf terraform
 	./terraform init
 	./terraform validate
 	@touch $@
