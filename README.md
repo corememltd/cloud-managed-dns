@@ -14,7 +14,7 @@ Deploy and managed your authoritative DNS service with your cloud provider (curr
 This project currently requires that you are using it on one of the following Operating Systems:
 
  * [Debian](https://debian.org/) 11 (bullseye) - tested
- * [Ubuntu](https://ubuntu.com/) 20.04 (focal)
+ * [Ubuntu](https://ubuntu.com/) 20.04 (focal) and later
  * [Microsoft WSL 2](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
 
 You will require pre-installed:
