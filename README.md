@@ -182,12 +182,9 @@ The output should look like the following, where if you see `azureprivatedns.net
 If it does not work:
 
   * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in `allowed_ips` using:
-
         dig CH TXT whoami.cloudflare @1.1.1.1
         dig CH TXT whoami.cloudflare @2606:4700:4700::1111
-
   * check that a local firewall is not blocking you directing querying non-local DNS servers
-
   * check there were no deployment errors, if there were, retry that process until there are no errors
 
 If you have populated your private zone, then you should be able to see your expected result for it with:
