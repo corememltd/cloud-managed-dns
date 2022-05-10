@@ -40,9 +40,9 @@ Using the example configuration file as a template:
 
 Now edit `setup.tfvars` to set at least the following to your needs:
 
- * `domain`
- * `allowed_ips`
-     * this must encompass at least the (public) IPs of your on-premises DNS resolvers
+ * **`domain` (required):** domain you are hosting
+ * **`location` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
+ * **`allowed_ips`:** this must encompass at least the (public) IPs of your on-premises DNS resolvers
 
 # Deploy
 

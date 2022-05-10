@@ -33,7 +33,6 @@ variable "size" {
 }
 variable "allowed_ips" {
   type = list(string)
-  nullable = false
   description = "List the external IPv4 and IPv6 addresses or CIDR prefixes that will be allowed to query the private zone (this must include the public IP's of your on-premises DNS resolvers)"
 }
 
@@ -106,7 +105,7 @@ resource "azurerm_private_dns_zone" "main" {
 
 resource "azurerm_virtual_network" "main" {
   name                = "${local.prefix}-network"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = [ "10.0.0.0/16", "fd00:db8:deca:da00::/56" ]
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
@@ -118,45 +117,41 @@ resource "azurerm_subnet" "main" {
   name                 = "${local.prefix}-subnet-${count.index}"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.0.${count.index}.0/24"]
-}
-
-resource "azurerm_public_ip" "ip" {
-  count = length(local.zones)
-
-  # use the index as a suffix so we retain it across redeploys
-  name                = "${local.prefix}-ip-${count.index}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  allocation_method   = "Dynamic"
-
-  # force the user to have to manually delete this as the
-  # we want to recycle them where possible to avoid having
-  # to reconfigure the on-premises systems
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "azurerm_network_interface" "main" {
-  count = length(local.zones)
-
-  name                = "${local.prefix}-nic-${count.index}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  ip_configuration {
-    name                          = "primary"
-    subnet_id                     = azurerm_subnet.main[count.index].id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.ip[count.index].id
-  }
+  address_prefixes     = [ "10.0.${count.index}.0/24", format("fd00:db8:deca:da%02d::/64", count.index) ]
 }
 
 resource "azurerm_network_security_group" "main" {
   name                = "${local.prefix}-nsg"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "azurerm_network_security_rule" "icmp" {
+  name                        = "${local.prefix}-nsr-icmp"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Icmp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.main.name
+}
+
+resource "azurerm_network_security_rule" "ssh" {
+  name                        = "${local.prefix}-nsr-ssh"
+  priority                    = 500
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.main.name
 }
 
 resource "azurerm_network_security_rule" "dns-udp" {
@@ -172,7 +167,7 @@ resource "azurerm_network_security_rule" "dns-udp" {
   source_address_prefix       = var.allowed_ips[count.index]
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = "${local.prefix}-nsg"
+  network_security_group_name = azurerm_network_security_group.main.name
 }
 
 resource "azurerm_network_security_rule" "dns-tcp" {
@@ -188,7 +183,76 @@ resource "azurerm_network_security_rule" "dns-tcp" {
   source_address_prefix       = var.allowed_ips[count.index]
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = "${local.prefix}-nsg"
+  network_security_group_name = azurerm_network_security_group.main.name
+}
+
+resource "azurerm_public_ip" "ipv6" {
+  count = length(local.zones)
+
+  # use the index as a suffix so we retain it across redeploys
+  name                = "${local.prefix}-ipv6-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  # use the full list of zones
+  zones               = sort(jsondecode(module.zones.stdout))
+
+  ip_version          = "IPv6"
+
+  # force the user to have to manually delete this as the
+  # we want to recycle them where possible to avoid having
+  # to reconfigure the on-premises systems
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "azurerm_public_ip" "ipv4" {
+  count = length(local.zones)
+
+  # use the index as a suffix so we retain it across redeploys
+  name                = "${local.prefix}-ipv4-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  # use the full list of zones
+  zones               = sort(jsondecode(module.zones.stdout))
+
+  ip_version          = "IPv4"
+
+  # force the user to have to manually delete this as the
+  # we want to recycle them where possible to avoid having
+  # to reconfigure the on-premises systems
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "azurerm_network_interface" "main" {
+  count = length(local.zones)
+
+  name                          = "${local.prefix}-nic-${count.index}"
+  location                      = azurerm_resource_group.main.location
+  resource_group_name           = azurerm_resource_group.main.name
+
+  ip_configuration {
+    name                          = "${local.prefix}-nic-ipv4-${count.index}"
+    primary                       = true
+    private_ip_address_version    = "IPv4"
+    subnet_id                     = azurerm_subnet.main[count.index].id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.ipv4[count.index].id
+  }
+
+  ip_configuration {
+    name                          = "${local.prefix}-nic-ipv6-${count.index}"
+    private_ip_address_version    = "IPv6"
+    subnet_id                     = azurerm_subnet.main[count.index].id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.ipv6[count.index].id
+  }
 }
 
 resource "azurerm_network_interface_security_group_association" "main" {
@@ -207,30 +271,37 @@ resource "azurerm_linux_virtual_machine" "main" {
   zone                            = local.zones[count.index]
   size                            = var.size
   custom_data                     = base64encode(var.domain)
-  admin_username                  = "root"
+  admin_username                  = "ubuntu"
   disable_password_authentication = true
   network_interface_ids = [
     azurerm_network_interface.main[count.index].id,
   ]
 
   admin_ssh_key {
-    username = "root"
+    username = "ubuntu"
     public_key = file("~/.ssh/id_rsa.pub")
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "22.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
   os_disk {
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = 10
     caching              = "ReadWrite"
   }
 }
 
 output "nameservers" {
   value = azurerm_dns_zone.main.name_servers
+}
+output "proxy-ipv6" {
+  value = azurerm_public_ip.ipv6[*].ip_address
+}
+output "proxy-ipv4" {
+  value = azurerm_public_ip.ipv4[*].ip_address
 }
