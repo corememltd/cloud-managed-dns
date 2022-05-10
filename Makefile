@@ -48,12 +48,16 @@ endif
 endif
 
 .PHONY: deploy-authoritative
-deploy-authoritative: setup.tf setup.tfvars .id_rsa.pub .stamp.terraform
+deploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars -auto-approve -target random_shuffle.zones
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
 
-.id_rsa.pub:
-	ssh-keygen -q -t rsa -N '' -f $@
+.PHONY: undeploy-authoritative
+undeploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
+	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
+
+id_rsa id_rsa.pub &:
+	ssh-keygen -q -t rsa -N '' -f id_rsa
 CLEAN += id_rsa id_rsa.pub
 
 setup.tfvars account.json:
