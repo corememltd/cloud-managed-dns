@@ -27,6 +27,8 @@ EOF
 # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#stub-zone-options
 cat <<'EOF' > "/opt/$VENDOR/$PROJECT/services/unbound/unbound.conf.d/zone.conf"
 server:
+    domain-insecure: "soas.ac.uk."
+
     local-zone: "." always_refuse
     local-zone: "soas.ac.uk." always_transparent
 
