@@ -208,4 +208,16 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 # Decommisioning
 
-...
+To remove the inproduction deployment, simply run from within the project directory:
+
+    ./terraform destroy
+
+A few items are purposely protected and will require manual deletion:
+
+ * Azure DNS (public) hosting
+     * nameservers entries will change when re-created, mismatches what you told the domain name registrar to use, your domain is now dead for typically 48 hours until DNS propagation completes
+     * retained so you may just re-use the existing resource with no outage
+ * public IPv4 and IPv6 addresses of the proxy resolvers
+     * by recycling the resources you do not need to reconfigure any on-premises resolvers
+
+If you really want to remove these resources, delete them via the web portal or CLI.
