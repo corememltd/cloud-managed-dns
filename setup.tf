@@ -85,24 +85,6 @@ resource "azurerm_resource_group" "main" {
   }
 }
 
-resource "azurerm_dns_zone" "main" {
-  name                = "${local.prefix}-${var.domain}"
-  resource_group_name = azurerm_resource_group.main.name
-
-  # force the user to have to manually delete this as the
-  # APEX NS records on the zone are randomly chosen by
-  # Azure on creation which is unlikely to match the NS
-  # records configured with the domain name registrar
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "azurerm_private_dns_zone" "main" {
-  name                = "${local.prefix}-${var.domain}"
-  resource_group_name = azurerm_resource_group.main.name
-}
-
 resource "azurerm_virtual_network" "main" {
   name                = "${local.prefix}-network"
   address_space       = [ "10.0.0.0/16", "fd00:db8:deca:da00::/56" ]
@@ -293,6 +275,31 @@ resource "azurerm_linux_virtual_machine" "main" {
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
   }
+}
+
+resource "azurerm_dns_zone" "main" {
+  name                = var.domain
+  resource_group_name = azurerm_resource_group.main.name
+
+  # force the user to have to manually delete this as the
+  # APEX NS records on the zone are randomly chosen by
+  # Azure on creation which is unlikely to match the NS
+  # records configured with the domain name registrar
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "azurerm_private_dns_zone" "main" {
+  name                = var.domain
+  resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "example" {
+  name                  = "${local.prefix}-pnl"
+  resource_group_name   = azurerm_resource_group.main.name
+  private_dns_zone_name = azurerm_private_dns_zone.main.name
+  virtual_network_id    = azurerm_virtual_network.main.id
 }
 
 output "nameservers" {
