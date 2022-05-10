@@ -212,7 +212,7 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 To remove the inproduction deployment, simply run from within the project directory:
 
-    make undeploy-authoritative
+    gmake undeploy-authoritative
 
 A few items are purposely protected and will require manual deletion:
 
