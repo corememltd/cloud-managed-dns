@@ -6,7 +6,7 @@ Deploy and managed your authoritative DNS service with your cloud provider (curr
     * [Azure Tutorial](https://learn.hashicorp.com/collections/terraform/azure-get-started)
     * [azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
  * [Packer](https://www.packer.io/) ([Documentation](https://www.packer.io/docs))
- * [Unbound](https://nlnetlabs.nl/projects/unbound/about/)
+ * [Unbound](https://nlnetlabs.nl/projects/unbound/about/) ([Documentation](https://unbound.docs.nlnetlabs.nl/en/latest/))
     * [`unbound.conf(5)`](https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html)
 
 # Pre-flight
