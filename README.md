@@ -2,6 +2,10 @@ Deploy and managed your authoritative DNS service with your cloud provider (curr
 
 ## Related Links
 
+ * [Azure](https://docs.microsoft.com/azure/)
+    * [Azure DNS](https://docs.microsoft.com/azure/dns/dns-overview)
+    * [Azure Private DNS](https://docs.microsoft.com/azure/dns/private-dns-overview)
+        * [Split-Horizon functionality](https://docs.microsoft.com/en-us/azure/dns/private-dns-scenarios#scenario-split-horizon-functionality)
  * [Terraform](https://www.terraform.io/) ([Documentation](https://www.terraform.io/docs))
     * [Azure Tutorial](https://learn.hashicorp.com/collections/terraform/azure-get-started)
     * [azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
