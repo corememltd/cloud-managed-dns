@@ -23,7 +23,7 @@ You will require pre-installed:
  * [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/)
      * have access to the Azure subscription you wish to deploy to
  * `curl`
- * `dig` - part of the Debian/Ubuntu `bind9-dnsutils` package
+ * `dig` ([Tutorial](https://phoenixnap.com/kb/linux-dig-command-examples)) - part of the Debian/Ubuntu `bind9-dnsutils` package
  * `git`
  * `gmake` - GNU `make`
  * `ssh`
