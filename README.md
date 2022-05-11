@@ -92,7 +92,7 @@ Where:
  * **`nameservers`:** nameservers to use when going live for your domain
      * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
  * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
-     * first IPv4 and first IPv6 address listed is assigned to the first poxy resolver, the second set to the second proxy resolver
+     * first IPv4 and first IPv6 address listed is assigned to the first proxy resolver, the second set to the second proxy resolver
      * these IPs are used by your on-premises resolvers to gain access to the private view of your zone
      * you should be able to SSH into these systems using:
 
@@ -125,7 +125,7 @@ Once you have a zone file, you can import it using (replacing the `-n` and `-f` 
  * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
  * private : `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
 
-Once you have imported the records, you sohuld be able to test them as detailed below.
+Once you have imported the records, you should be able to test them as detailed below.
 
 ## Recursive DNS (On-Premises)
 
@@ -206,11 +206,11 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 **N.B.** do not change [`168.63.129.16` as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
 
-# Decommisioning
+# Decommissioning
 
 **N.B.** Works in Progress
 
-To remove the inproduction deployment, simply run from within the project directory:
+To remove the in production deployment, simply run from within the project directory:
 
     gmake undeploy-authoritative
 
