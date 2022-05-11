@@ -37,7 +37,6 @@ variable "allowed_ips" {
 }
 
 locals {
-  prefix = "${var.vendor}-${var.project}"
   account = jsondecode(file("account.json"))
   zones = sort(random_shuffle.zones.result)
 }
@@ -74,7 +73,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "${local.prefix}"
+  name     = "${var.vendor}-${var.project}"
   location = var.location
   tags     = {
     Vendor  = "coreMem Limited"
@@ -86,7 +85,7 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_virtual_network" "main" {
-  name                = "${local.prefix}-network"
+  name                = "network"
   address_space       = [ "10.0.0.0/16", "fd00:db8:deca:da00::/56" ]
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
@@ -96,20 +95,20 @@ resource "azurerm_virtual_network" "main" {
 resource "azurerm_subnet" "main" {
   count = length(local.zones)
 
-  name                 = "${local.prefix}-subnet-${count.index}"
+  name                 = "subnet-${count.index}"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [ "10.0.${count.index}.0/24", format("fd00:db8:deca:da%02d::/64", count.index) ]
 }
 
 resource "azurerm_network_security_group" "main" {
-  name                = "${local.prefix}-nsg"
+  name                = "nsg"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_network_security_rule" "icmp" {
-  name                        = "${local.prefix}-nsr-icmp"
+  name                        = "nsr-icmp"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
@@ -123,7 +122,7 @@ resource "azurerm_network_security_rule" "icmp" {
 }
 
 resource "azurerm_network_security_rule" "ssh" {
-  name                        = "${local.prefix}-nsr-ssh"
+  name                        = "nsr-ssh"
   priority                    = 500
   direction                   = "Inbound"
   access                      = "Allow"
@@ -139,7 +138,7 @@ resource "azurerm_network_security_rule" "ssh" {
 resource "azurerm_network_security_rule" "dns-udp" {
   count = length(var.allowed_ips)
 
-  name                        = "${local.prefix}-nsr-dns-udp-${count.index}"
+  name                        = "nsr-dns-udp-${count.index}"
   priority                    = (1000 + 2 * count.index)
   direction                   = "Inbound"
   access                      = "Allow"
@@ -155,7 +154,7 @@ resource "azurerm_network_security_rule" "dns-udp" {
 resource "azurerm_network_security_rule" "dns-tcp" {
   count = length(var.allowed_ips)
 
-  name                        = "${local.prefix}-nsr-dns-tcp-${count.index}"
+  name                        = "nsr-dns-tcp-${count.index}"
   priority                    = (1001 + 2 * count.index)
   direction                   = "Inbound"
   access                      = "Allow"
@@ -172,7 +171,7 @@ resource "azurerm_public_ip" "ipv6" {
   count = length(local.zones)
 
   # use the index as a suffix so we retain it across redeploys
-  name                = "${local.prefix}-ipv6-${count.index}"
+  name                = "ipv6-${count.index}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   allocation_method   = "Static"
@@ -194,7 +193,7 @@ resource "azurerm_public_ip" "ipv4" {
   count = length(local.zones)
 
   # use the index as a suffix so we retain it across redeploys
-  name                = "${local.prefix}-ipv4-${count.index}"
+  name                = "ipv4-${count.index}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   allocation_method   = "Static"
@@ -215,12 +214,12 @@ resource "azurerm_public_ip" "ipv4" {
 resource "azurerm_network_interface" "main" {
   count = length(local.zones)
 
-  name                          = "${local.prefix}-nic-${count.index}"
+  name                          = "nic-${count.index}"
   location                      = azurerm_resource_group.main.location
   resource_group_name           = azurerm_resource_group.main.name
 
   ip_configuration {
-    name                          = "${local.prefix}-nic-ipv4-${count.index}"
+    name                          = "nic-ipv4-${count.index}"
     primary                       = true
     private_ip_address_version    = "IPv4"
     subnet_id                     = azurerm_subnet.main[count.index].id
@@ -229,7 +228,7 @@ resource "azurerm_network_interface" "main" {
   }
 
   ip_configuration {
-    name                          = "${local.prefix}-nic-ipv6-${count.index}"
+    name                          = "nic-ipv6-${count.index}"
     private_ip_address_version    = "IPv6"
     subnet_id                     = azurerm_subnet.main[count.index].id
     private_ip_address_allocation = "Dynamic"
@@ -247,7 +246,7 @@ resource "azurerm_network_interface_security_group_association" "main" {
 resource "azurerm_linux_virtual_machine" "main" {
   count = length(local.zones)
 
-  name                            = "${local.prefix}-vm-${count.index}"
+  name                            = "vm-${count.index}"
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
   zone                            = local.zones[count.index]
@@ -295,8 +294,8 @@ resource "azurerm_private_dns_zone" "main" {
   resource_group_name = azurerm_resource_group.main.name
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "example" {
-  name                  = "${local.prefix}-pnl"
+resource "azurerm_private_dns_zone_virtual_network_link" "main" {
+  name                  = "vnl"
   resource_group_name   = azurerm_resource_group.main.name
   private_dns_zone_name = azurerm_private_dns_zone.main.name
   virtual_network_id    = azurerm_virtual_network.main.id
