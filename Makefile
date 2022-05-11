@@ -69,6 +69,8 @@ setup.tfvars account.json:
 	./terraform init
 	./terraform validate
 	@touch $@
+CLEAN += .stamp.terraform
+DISTCLEAN += .terraform .terraform.lock.hcl
 
 .PHONY: setup.pkr.hcl
 setup.pkr.hcl: packer
