@@ -53,8 +53,10 @@ deploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
 
 .PHONY: undeploy-authoritative
+undeploy-authoritative: PROTECT = azurerm_public_ip.ipv6 azurerm_public_ip.ipv4 azurerm_dns_zone.main
 undeploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
-	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
+	./terraform state rm $(PROTECT) 2>&- || true
+	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars || true
 
 id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
