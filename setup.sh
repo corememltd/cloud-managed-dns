@@ -5,15 +5,15 @@ set -eu
 VENDOR=coremem
 PROJECT=cloud-managed-dns
 
-apt update
-apt -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+apt-get update
+apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
 		--option=Dpkg::options::=--force-unsafe-io upgrade --no-install-recommends
-apt -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
 		--option=Dpkg::options::=--force-unsafe-io install --no-install-recommends \
 	git \
 	unbound
-apt -y autoremove
-apt clean
+apt-get -y autoremove
+apt-get clean
 find /var/lib/apt/lists -type f -delete
 
 if [ -d /opt/$VENDOR/$PROJECT ]; then
@@ -58,6 +58,7 @@ EOF
 
 find "/opt/$VENDOR/$PROJECT/services/unbound/unbound.conf.d" -type f -print0 | xargs -0 -r -t ln -f -t /etc/unbound/unbound.conf.d
 
-unbound-checkconf
+# https://github.com/NLnetLabs/unbound/issues/574
+#unbound-checkconf
 
 exit 0

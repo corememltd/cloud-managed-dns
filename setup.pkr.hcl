@@ -59,9 +59,6 @@ source "azure-arm" "main" {
   image_sku       = "22_04-lts-gen2"
   image_version   = "latest"
 
-  # https://github.com/hashicorp/packer/issues/11656
-  temporary_key_pair_type = "ed25519"
-
   managed_image_resource_group_name = "${var.vendor}-${var.project}"
   managed_image_zone_resilient = true
   managed_image_name = "dns-proxy-resolver"
@@ -99,13 +96,13 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh -x '{{ .Path }}'"
+    execute_command = "{{ .Vars }} sudo -E sh -x '{{ .Path }}'"
     script = "setup.sh"
   }
 
   # https://docs.microsoft.com/en-us/azure/virtual-machines/generalize
   provisioner "shell" {
-    inline_shebang = "{{ .Vars }} sudo -E sh -eux"
+    execute_command = "{{ .Vars }} sudo -E sh -eux"
     inline = [
       "find /var/log/ -type f -delete",
       "find \"$(getent passwd root | cut -d: -f6)/.ssh\" -type f -print0 2>&- | xargs -r -0 shred -u",
