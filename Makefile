@@ -52,7 +52,7 @@ endif
 .PHONY: build-proxy
 build-proxy: setup.pkr.hcl setup.hcl account.json .stamp.terraform .stamp.packer
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main
-	env TMPDIR='$(CURDIR)' ./packer build $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
+	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
 .PHONY: deploy-authoritative
 deploy-authoritative: setup.tf setup.hcl account.json id_rsa.pub .stamp.terraform
