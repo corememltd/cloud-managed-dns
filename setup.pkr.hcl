@@ -42,6 +42,14 @@ source "azure-arm" "main" {
 
   location = var.location
 
+  azure_tags     = {
+    Vendor  = "coreMem Limited"
+    Project = "Cloud Managed DNS"
+    Commit  = var.commit
+    URI     = "https://coremem.com/"
+    Email   = "info@coremem.com"
+  }
+
   vm_size = var.size
 
   os_type = "Linux"
@@ -51,10 +59,12 @@ source "azure-arm" "main" {
   image_sku       = "22_04-lts-gen2"
   image_version   = "latest"
 
-  managed_image_resource_group_name = "${var.vendor}-${var.project}"
-  managed_image_name = "dns-proxy-resolver"
+  # https://github.com/hashicorp/packer/issues/11656
+  temporary_key_pair_type = "ed25519"
 
-  ssh_username = "ubuntu"
+  managed_image_resource_group_name = "${var.vendor}-${var.project}"
+  managed_image_zone_resilient = true
+  managed_image_name = "dns-proxy-resolver"
 }
 
 build {
@@ -89,7 +99,7 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'"
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh -x '{{ .Path }}'"
     script = "setup.sh"
   }
 

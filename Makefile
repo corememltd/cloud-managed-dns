@@ -7,7 +7,9 @@ PROJECT ?= cloud-managed-dns
 COMMITID = $(shell git rev-parse --short HEAD | tr -d '\n')$(shell git diff-files --quiet || printf -- -dirty)
 
 TERRAFORM_VERSION = 1.1.9
-PACKER_VERSION = 1.8.0
+#PACKER_VERSION = 1.8.0
+# https://github.com/hashicorp/packer/pull/11761
+PACKER_VERSION = 1.8.1-dev
 
 define BUILD_FLAGS_template =
 TERRAFORM_BUILD_FLAGS += -var $(1)=$(2)
@@ -90,8 +92,13 @@ terraform: terraform_$(TERRAFORM_VERSION)_$(KERNEL)_$(MACHINE).zip
 	unzip -oDD $< $@
 CLEAN += terraform
 
+ifneq ($(findstring -dev,$(PACKER_VERSION)),)
+packer_$(PACKER_VERSION)_$(KERNEL)_$(MACHINE).zip: URL = https://github.com/hashicorp/packer/releases/download/nightly
+else
+packer_$(PACKER_VERSION)_$(KERNEL)_$(MACHINE).zip: URL = https://releases.hashicorp.com/packer/$(PACKER_VERSION)
+endif
 packer_$(PACKER_VERSION)_$(KERNEL)_$(MACHINE).zip:
-	curl -f -O -J -L https://releases.hashicorp.com/packer/$(PACKER_VERSION)/$@
+	curl -f -O -J -L $(URL)/$@
 DISTCLEAN += $(wildcard packer_*.zip)
 
 packer: packer_$(PACKER_VERSION)_$(KERNEL)_$(MACHINE).zip
