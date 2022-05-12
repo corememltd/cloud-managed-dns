@@ -47,22 +47,32 @@ else
 endif
 endif
 
+.PHONY: build-proxy
+build-proxy: setup.pkr.hcl setup.hcl account.json .stamp.terraform .stamp.packer
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main
+	env TMPDIR='$(CURDIR)' ./packer build $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
+
 .PHONY: deploy-authoritative
-deploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars -auto-approve -target random_shuffle.zones
-	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars
+deploy-authoritative: setup.tf setup.hcl account.json id_rsa.pub .stamp.terraform
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones
+	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl
 
 .PHONY: undeploy-authoritative
 undeploy-authoritative: PROTECT = azurerm_public_ip.ipv6 azurerm_public_ip.ipv4 azurerm_dns_zone.main
-undeploy-authoritative: setup.tf setup.tfvars id_rsa.pub .stamp.terraform
+undeploy-authoritative: setup.tf setup.hcl account.kson id_rsa.pub .stamp.terraform
 	./terraform state rm $(PROTECT) 2>&- || true
-	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.tfvars || true
+	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl || true
 
 id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
 CLEAN += id_rsa id_rsa.pub
 
-setup.tfvars account.json:
+.stamp.packer: setup.pkr.hcl setup.hcl account.json packer
+	./packer validate $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
+	@touch $@
+CLEAN += .stamp.packer
+
+setup.hcl account.json:
 	@{ echo 'missing $@, create it as described in the README.md' >&2; exit 1; }
 
 .stamp.terraform: setup.tf terraform
@@ -71,10 +81,6 @@ setup.tfvars account.json:
 	@touch $@
 CLEAN += .stamp.terraform
 DISTCLEAN += .terraform .terraform.lock.hcl
-
-.PHONY: setup.pkr.hcl
-setup.pkr.hcl: packer
-	./$< validate $(PACKER_BUILD_FLAGS) $@
 
 terraform_$(TERRAFORM_VERSION)_$(KERNEL)_$(MACHINE).zip:
 	curl -f -O -J -L https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/$@

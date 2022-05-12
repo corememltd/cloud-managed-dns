@@ -8,5 +8,7 @@ terraform
 terraform.tfstate*
 
 id_rsa*
-setup.tfvars
+*.git
+packer-log*
+setup.hcl
 account.json
