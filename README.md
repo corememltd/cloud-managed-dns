@@ -128,8 +128,8 @@ To use this you will need a copy of your zone file and at least the public view,
 
 Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the view you are importing:
 
- * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
- * private : `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr
+ * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr`
+ * private: `az network private-dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr`
 
 Once you have imported the records, you should be able to test them as detailed below.
 
