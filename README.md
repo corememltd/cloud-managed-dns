@@ -54,9 +54,9 @@ The contents of this file should describe your selected subscription and the ten
 
 Using the example configuration file as a template:
 
-    cp setup.tfvars.example setup.tfvars
+    cp setup.hcl.example setup.hcl
 
-Now edit `setup.tfvars` to set at least the following to your needs:
+Now edit `setup.hcl` to set at least the following to your needs:
 
  * **`domain` (required):** domain you are hosting
  * **`location` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
@@ -161,7 +161,7 @@ Where `nsA-0Y.azure-dns.com` is one of the entries from the `nameservers` output
 
 ## Private
 
-First check that the proxy resolvers are working (they may take a few minutes to start for the first time) by running the following command from a workstation holding one of the IP addresses you listed in `allowed_ips` earlier in `setup.tfvars`:
+First check that the proxy resolvers are working (they may take a few minutes to start for the first time) by running the following command from a workstation holding one of the IP addresses you listed in `allowed_ips` earlier in `setup.hcl`:
 
     dig @192.0.2.4 SOA example.invalid
 
