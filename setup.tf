@@ -263,12 +263,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     public_key = file("id_rsa.pub")
   }
 
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
-    version   = "latest"
-  }
+  source_image_id = "/subscriptions/${local.account.id}/resourceGroups/${azurerm_resource_group.main.name}/providers/Microsoft.Compute/images/dns-proxy-resolver"
 
   os_disk {
     storage_account_type = "Standard_LRS"

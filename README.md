@@ -66,6 +66,12 @@ Now edit `setup.tfvars` to set at least the following to your needs:
 
 ## Authoritative DNS (Cloud)
 
+Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
+
+    gmake build-proxy
+
+Once the image has been cooked, you can now deploy the infrastructure for this with:
+
     gmake deploy-authoritative
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
