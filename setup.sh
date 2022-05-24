@@ -21,7 +21,7 @@ if [ -d /opt/$VENDOR/$PROJECT ]; then
 	git -C /opt/$VENDOR/$PROJECT pull origin HEAD
 else
 	mkdir /opt/$VENDOR
-	git -c advice.detachedHead clone /tmp/$VENDOR-$PROJECT.git /opt/$VENDOR/$PROJECT
+	git -c advice.detachedHead=false clone /tmp/$VENDOR-$PROJECT.git /opt/$VENDOR/$PROJECT
 fi
 
 shred -u /tmp/$VENDOR-$PROJECT.git
