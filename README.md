@@ -72,6 +72,8 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 **N.B.** annoyingly you will need to do this twice one immediately after the other but once done you should be able to walk away and get a coffee
 
+**N.B.** if you see an error stating `Cannot locate the managed image resource group ...` then try deleting `~/.azure/packer` and retrying
+
 ## Authoritative DNS (Cloud)
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
