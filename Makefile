@@ -48,14 +48,14 @@ endif
 endif
 
 .PHONY: build-proxy
-build-proxy: .stamp.terraform .stamp.packer
+build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main
 	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
 .PHONY: deploy-authoritative
-deploy-authoritative: .stamp.terraform
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones
-	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl
+deploy-authoritative: setup.tf .stamp.terraform
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=$< -auto-approve -target random_shuffle.zones
+	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=$<
 
 .PHONY: undeploy-authoritative
 undeploy-authoritative: PROTECT = azurerm_public_ip.ipv6 azurerm_public_ip.ipv4 azurerm_dns_zone.main
