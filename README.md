@@ -133,7 +133,7 @@ You now need to populate your Azure DNS resources with records. You can do this 
 To use this you will need a copy of your zone file and at least the public view, if not private one too. If you do not have traditional BIND zone files, your existing authoritative DNS server (check the vendor documentation!) should let you generate one via an AXFR query using something like:
 
     dig AXFR @192.0.2.1 example.invalid | tee example.invalid.axfr
-
+terraform.tfstate
 Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the view you are importing:
 
  * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr`
@@ -237,3 +237,5 @@ A few items are purposely protected and will require manual deletion:
      * by recycling the resources you do not need to reconfigure any on-premises resolvers
 
 If you really want to remove these resources, delete them via the web portal or CLI.
+
+**N.B.** do *not* delete the `terraform.tfstate` file unless you have deleted the whole resource group
