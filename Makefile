@@ -6,10 +6,8 @@ PROJECT ?= cloud-managed-dns
 
 COMMITID = $(shell git rev-parse --short HEAD | tr -d '\n')$(shell git diff-files --quiet || printf -- -dirty)
 
-TERRAFORM_VERSION = 1.1.9
-#PACKER_VERSION = 1.8.0
-# https://github.com/hashicorp/packer/pull/11761
-PACKER_VERSION = 1.8.1-dev
+TERRAFORM_VERSION = 1.2.4
+PACKER_VERSION = 1.8.2
 
 define BUILD_FLAGS_template =
 TERRAFORM_BUILD_FLAGS += -var $(1)=$(2)
