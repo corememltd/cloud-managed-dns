@@ -67,7 +67,7 @@ id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
 CLEAN += id_rsa id_rsa.pub
 
-.stamp.packer: packer setup.pkr.hcl setup.hcl account.json
+.stamp.packer: setup.pkr.hcl packer setup.hcl account.json
 	./packer validate $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 	@touch $@
 CLEAN += .stamp.packer
@@ -75,7 +75,7 @@ CLEAN += .stamp.packer
 setup.hcl account.json:
 	@{ echo 'missing $@, create it as described in the README.md' >&2; exit 1; }
 
-.stamp.terraform: terraform setup.tf setup.hcl account.json id_rsa.pub
+.stamp.terraform: setup.tf terraform setup.hcl account.json id_rsa.pub
 	./terraform init
 	./terraform validate
 	@touch $@
