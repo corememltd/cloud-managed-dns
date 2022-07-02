@@ -35,7 +35,7 @@ You will require pre-installed:
 
 Check out this project and enter the project directory with:
 
-    git clone https://gitlab.com/coremem/cloud-managed-dns.git
+    git clone https://github.com/corememltd/cloud-managed-dns.git
     cd cloud-managed-dns
 
 Start by logging into Azure via the CLI by running:
