@@ -49,19 +49,19 @@ endif
 
 .PHONY: build-proxy
 build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main >&-
 	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
 .PHONY: deploy-authoritative
 deploy-authoritative: setup.tf .stamp.terraform
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=$< -auto-approve -target random_shuffle.zones
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=$< -auto-approve -target random_shuffle.zones >&-
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=$<
 
 .PHONY: undeploy-authoritative
 undeploy-authoritative: PROTECT = azurerm_public_ip.ipv6 azurerm_public_ip.ipv4 azurerm_dns_zone.main
-undeploy-authoritative: .stamp.terraform
+undeploy-authoritative: setup.tf .stamp.terraform
 	./terraform state rm $(PROTECT) 2>&- || true
-	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl || true
+	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=$< || true
 
 id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
