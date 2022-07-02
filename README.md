@@ -64,6 +64,14 @@ Now edit `setup.hcl` to set at least the following to your needs:
 
 # Deploy
 
+Whilst following the below deploy process, early into it you may see it stall with something like the following message:
+
+    ==> azure-arm.main: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ABCD12345 to authenticate.
+
+You should follow the instructions shown there to authorise the CLI tooling to perform tasks using your user credentials.
+
+**N.B.** annoyingly you will need to do this twice one immediately after the other but once done you should be able to walk away and get a coffee
+
 ## Authoritative DNS (Cloud)
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
