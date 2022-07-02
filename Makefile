@@ -54,14 +54,14 @@ build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer
 
 .PHONY: deploy-authoritative
 deploy-authoritative: setup.tf .stamp.terraform
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=$< -auto-approve -target random_shuffle.zones >&-
-	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=$<
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones >&-
+	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl
 
 .PHONY: undeploy-authoritative
 undeploy-authoritative: PROTECT = azurerm_public_ip.ipv6 azurerm_public_ip.ipv4 azurerm_dns_zone.main
 undeploy-authoritative: setup.tf .stamp.terraform
 	./terraform state rm $(PROTECT) 2>&- || true
-	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=$< || true
+	./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl || true
 
 id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
