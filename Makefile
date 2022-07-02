@@ -9,6 +9,7 @@ COMMITID = $(shell git rev-parse --short HEAD | tr -d '\n')$(shell git diff-file
 TERRAFORM_VERSION = 1.2.4
 PACKER_VERSION = 1.8.2
 
+TERRAFORM_BUILD_FLAGS = -compact-warnings
 define BUILD_FLAGS_template =
 TERRAFORM_BUILD_FLAGS += -var $(1)=$(2)
 PACKER_BUILD_FLAGS += -var $(1)=$(2)

@@ -74,13 +74,15 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 **N.B.** if you see an error stating `Cannot locate the managed image resource group ...` then try deleting `~/.azure/packer` and retrying
 
+**N.B.** ignore any `Duplicate required provider` warnings in regards to the `random_uuid` module, it is a bug in someone elses code we cannot work around and fortunately is harmless
+
 ## Authoritative DNS (Cloud)
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
 
     gmake build-proxy
 
-Once the image has been cooked, you can now deploy the infrastructure for this with:
+Once the image has been cooked, you can now deploy the infrastructure for this with (you will be prompted to answer 'yes' if you wish to continue):
 
     gmake deploy-authoritative
 
