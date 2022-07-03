@@ -64,7 +64,7 @@ Now edit `setup.hcl` to set at least the following to your needs:
 
 ## Multiple Administrators
 
-If you are going to be the only administrator provisioning and/or decommisioning (this does *not* include multiple zone file administrators) the service you can ignore this section.
+If you are going to be the only administrator provisioning and/or decommissioning (this does *not* include multiple zone file administrators) the service you can ignore this section.
 
 This project uses Terraform which unfortunately needs to store information locally to it that describes any existing cloud deployment it has maintained, it does this by using a file named `terraform.tfstate` to store its state in.
 
@@ -87,7 +87,7 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 **N.B.** if you see an error stating `Cannot locate the managed image resource group ...` then try deleting `~/.azure/packer` and retrying
 
-**N.B.** ignore any `Duplicate required provider` warnings in regards to the `random_uuid` module, it is a bug in someone elses code we cannot work around and fortunately is harmless
+**N.B.** ignore any `Duplicate required provider` warnings in regards to the `random_uuid` module, it is a bug in someone else's code we cannot work around and fortunately is harmless
 
 ## Authoritative DNS (Cloud)
 
