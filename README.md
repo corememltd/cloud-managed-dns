@@ -161,7 +161,7 @@ Once you have imported the records, you should be able to test them as detailed 
 
 ## Recursive DNS (On-Premises)
 
-...
+...[work in progress](https://github.com/corememltd/cloud-managed-dns/issues/2)
 
 # Usage and Testing
 
