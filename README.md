@@ -238,6 +238,10 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 **N.B.** do not change [`168.63.129.16` as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
 
+# Monitoring
+
+...[work in progress](https://github.com/corememltd/cloud-managed-dns/issues/1)
+
 # Decommissioning
 
 **N.B.** Works in Progress
