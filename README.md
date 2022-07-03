@@ -62,6 +62,19 @@ Now edit `setup.hcl` to set at least the following to your needs:
  * **`location` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
  * **`allowed_ips` (required):** this must encompass at least the (public) IPs of your on-premises DNS resolvers
 
+## Multiple Administrators
+
+If you are going to be the only administrator provisioning and/or decommisioning (this does *not* include multiple zone file administrators) the service you can ignore this section.
+
+This project uses Terraform which unfortunately needs to store information locally to it that describes any existing cloud deployment it has maintained, it does this by using a file named `terraform.tfstate` to store its state in.
+
+Only a single person may use the deploy and decommissioning process below at any one time, and you must pass around the `terraform.tfstate` around your team once finished.
+
+Every site deployment is different, but I would recommend either:
+
+ * fork this project, edit `.gitignore` to no longer ignore 'terraform.tfstate' by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
+ * store the file on some networking resource (eg. Microsoft Windows/Samba share, Azure storage account, ...)
+
 # Deploy
 
 Whilst following the below deploy process, early into it you may see it stall with something like the following message:
