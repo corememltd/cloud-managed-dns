@@ -30,6 +30,7 @@ You will require pre-installed:
  * `dig` ([Tutorial](https://phoenixnap.com/kb/linux-dig-command-examples)) - part of the Debian/Ubuntu `bind9-dnsutils` package
  * `git`
  * `gmake` - GNU `make`
+     * macOS users need to use `gmake` where the instructions below describe that you need to type `make`
  * `ssh`
  * `unzip`
 
@@ -93,11 +94,11 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
 
-    gmake build-proxy
+    make build-proxy
 
 Once the image has been cooked, you can now deploy the infrastructure for this with (you will be prompted to answer 'yes' if you wish to continue):
 
-    gmake deploy-authoritative
+    make deploy-authoritative
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
 
@@ -243,7 +244,7 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 To remove the in production deployment, simply run from within the project directory:
 
-    gmake undeploy-authoritative
+    make undeploy-authoritative
 
 A few items are purposely protected and will require manual deletion:
 
