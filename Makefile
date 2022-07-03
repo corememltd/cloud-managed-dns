@@ -56,7 +56,7 @@ build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer
 .PHONY: deploy-authoritative
 deploy-authoritative: setup.tf .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones >&-
-	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl
+	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve
 
 .PHONY: undeploy-authoritative
 undeploy-authoritative: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_private_dns_zone.main

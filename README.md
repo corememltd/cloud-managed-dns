@@ -96,7 +96,7 @@ Initially we need to build an image for our DNS proxy resolver to run in Azure, 
 
     make build-proxy
 
-Once the image has been cooked, you can now deploy the infrastructure for this with (you will be prompted to answer 'yes' if you wish to continue):
+Once the image has been cooked, you can now deploy the infrastructure for this with:
 
     make deploy-authoritative
 
