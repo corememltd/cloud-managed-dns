@@ -108,15 +108,15 @@ When the process completes (first run will take at least ten minutes), you will 
       "nsA-0Y.azure-dns.com.",
       "nsB-0Y.azure-dns.net.",
       "nsC-0Y.azure-dns.org.",
-      "nsD-0Y.azure-dns.info.",
+      "nsD-0Y.azure-dns.info."
     ])
     proxy-ipv6 = [
       "2001:db8:100:8::43",
-      "2001:db8:100:8::2e",
+      "2001:db8:100:8::2e"
     ]
     proxy-ipv4 = [
       "192.0.2.4",
-      "192.0.2.79",
+      "192.0.2.79"
     ]
 
 Where:
