@@ -73,7 +73,7 @@ Only a single person may use the deploy and decommissioning process below at any
 
 Every site deployment is different, but I would recommend either:
 
- * fork this project, edit `.gitignore` to no longer ignore 'terraform.tfstate' by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
+ * fork this project, edit `.gitignore` to no longer ignore `terraform.tfstate` by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
  * store the file on some networking resource (eg. Microsoft Windows/Samba share, Azure storage account, ...)
 
 # Deploy
