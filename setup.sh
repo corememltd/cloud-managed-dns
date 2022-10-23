@@ -18,7 +18,7 @@ apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-conf
 		--option=Dpkg::options::=--force-unsafe-io install --no-install-recommends \
 	git \
 	jq \
-	unbound \
+	unbound
 apt-get -y autoremove
 apt-get clean
 find /var/lib/apt/lists -type f -delete
