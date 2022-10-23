@@ -58,9 +58,13 @@ azure-build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer | notdirty
 	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
 .PHONY: azure-deploy
-deploy-azure: setup.tf .stamp.terraform
+azure-deploy: setup.tf .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones >&-
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve
+
+.PHONY: azure-refresh
+azure-refresh: setup.tf .stamp.terraform
+	./terraform refresh $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl >&-
 
 .PHONY: azure-undeploy
 azure-undeploy: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_network_security_group.main azurerm_private_dns_zone.main

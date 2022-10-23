@@ -55,9 +55,9 @@ The contents of this file should describe your selected subscription and the ten
 
 Using the example configuration file as a template:
 
-    cp deployment/azure/setup.hcl.example deployment/azure/setup.hcl
+    cp setup.hcl.example setup.hcl
 
-Now edit `deployment/azure/setup.hcl` to set at least the following to your needs:
+Now edit `setup.hcl` to set at least the following to your needs:
 
  * **`domains` (required):** list of one or more domains you are hosting
  * **`location` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
@@ -98,7 +98,7 @@ Initially we need to build an image for our DNS proxy resolver to run in Azure, 
 
 Once the image has been cooked, you can now deploy the infrastructure for this with:
 
-    make deploy-azure
+    make azure-deploy
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
 
