@@ -11,5 +11,6 @@ m4 -I /usr/share/doc/m4/examples \
 	-D DOMAINS="$DOMAINS" \
 		/opt/coremem/cloud-managed-dns/services/unbound/unbound.conf.d/zone.conf.m4 \
 	> /opt/coremem/cloud-managed-dns/services/unbound/unbound.conf.d/zone.conf
+ln -f -t /etc/unbound/unbound.conf.d /opt/coremem/cloud-managed-dns/services/unbound/unbound.conf.d/zone.conf
 
 exit 0
