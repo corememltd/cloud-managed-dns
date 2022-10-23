@@ -11,9 +11,9 @@ variable "commit" {
   default = "dev"
 }
 
-variable "domain" {
-  type = string
-  description = "The domain you are hosting, such as 'example.invalid'"
+variable "domains" {
+  type = list(string)
+  description = "The domains you are hosting, such as 'example.invalid'"
 }
 variable "location" {
   type = string

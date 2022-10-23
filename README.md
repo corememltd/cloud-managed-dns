@@ -55,11 +55,11 @@ The contents of this file should describe your selected subscription and the ten
 
 Using the example configuration file as a template:
 
-    cp setup.hcl.example setup.hcl
+    cp deployment/azure/setup.hcl.example deployment/azure/setup.hcl
 
-Now edit `setup.hcl` to set at least the following to your needs:
+Now edit `deployment/azure/setup.hcl` to set at least the following to your needs:
 
- * **`domain` (required):** domain you are hosting
+ * **`domains` (required):** list of one or more domains you are hosting
  * **`location` (default: `uksouth`):** [region with availability zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones) nearest to your on-premise deployment
  * **`allowed_ips` (required):** this must encompass at least the (public) IPs of your on-premises DNS resolvers
 
@@ -94,22 +94,16 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
 
-    make build-proxy
+    make azure-build-proxy
 
 Once the image has been cooked, you can now deploy the infrastructure for this with:
 
-    make deploy-authoritative
+    make deploy-azure
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
 
 When the process completes (first run will take at least ten minutes), you will be [returned output](https://www.terraform.io/language/values/outputs) that resembles the *example* below:
 
-    nameservers = toset([
-      "nsA-0Y.azure-dns.com.",
-      "nsB-0Y.azure-dns.net.",
-      "nsC-0Y.azure-dns.org.",
-      "nsD-0Y.azure-dns.info."
-    ])
     proxy-ipv6 = [
       "2001:db8:100:8::43",
       "2001:db8:100:8::2e"
@@ -121,8 +115,6 @@ When the process completes (first run will take at least ten minutes), you will 
 
 Where:
 
- * **`nameservers`:** nameservers to use when going live for your domain
-     * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
  * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
      * first IPv4 and first IPv6 address listed is assigned to the first proxy resolver, the second set to the second proxy resolver
      * these IPs are used by your on-premises resolvers to gain access to the private view of your zone
@@ -151,7 +143,7 @@ You now need to populate your Azure DNS resources with records. You can do this 
 To use this you will need a copy of your zone file and at least the public view, if not private one too. If you do not have traditional BIND zone files, your existing authoritative DNS server (check the vendor documentation!) should let you generate one via an AXFR query using something like:
 
     dig AXFR @192.0.2.1 example.invalid | tee example.invalid.axfr
-terraform.tfstate
+
 Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the view you are importing:
 
  * public: `az network dns zone import -g coremem-cloud-managed-dns -n example.invalid -f example.invalid.axfr`
@@ -228,7 +220,7 @@ If you have populated your private zone, then you should be able to see your exp
 
     dig @192.0.2.4 server.example.invalid
 
-**N.B.** any query not for your domain the proxy will return a `REFUSED` status and no results.
+**N.B.** any query not for your domains the proxy will return a `REFUSED` status and no results.
 
 ### From the Proxy
 
@@ -237,6 +229,12 @@ If you are SSHed into the proxy resolver, you instead would use:
     dig @168.63.129.16 server.example.invalid
 
 **N.B.** do not change [`168.63.129.16` as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
+
+## Placing into Production
+
+
+ * **`nameservers`:** nameservers to use when going live for your domain
+     * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
 
 # Monitoring
 
@@ -248,7 +246,7 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 To remove the in production deployment, simply run from within the project directory:
 
-    make undeploy-authoritative
+    make azure-undeploy
 
 A few items are purposely protected and will require manual deletion:
 

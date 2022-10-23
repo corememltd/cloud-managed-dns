@@ -14,10 +14,10 @@ variable "commit" {
   default = "dev"
 }
 
-variable "domain" {
-  type = string
+variable "domains" {
+  type = list(string)
   nullable = false
-  description = "The domain you are hosting, such as 'example.invalid'"
+  description = "The domains you are hosting, such as 'example.invalid'"
 }
 variable "location" {
   type = string
@@ -251,7 +251,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name             = azurerm_resource_group.main.name
   zone                            = local.zones[count.index]
   size                            = var.size
-  custom_data                     = base64encode(var.domain)
+  custom_data                     = base64encode(jsonencode({"domains"=var.domains}))
   admin_username                  = "ubuntu"
   disable_password_authentication = true
   network_interface_ids = [
@@ -272,7 +272,8 @@ resource "azurerm_linux_virtual_machine" "main" {
 }
 
 resource "azurerm_dns_zone" "main" {
-  name                = var.domain
+  for_each            = toset(var.domains)
+  name                = each.key
   resource_group_name = azurerm_resource_group.main.name
 
   # force the user to have to manually delete this as the
@@ -285,20 +286,19 @@ resource "azurerm_dns_zone" "main" {
 }
 
 resource "azurerm_private_dns_zone" "main" {
-  name                = var.domain
+  for_each            = toset(var.domains)
+  name                = each.key
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "main" {
-  name                  = "vnl"
+  for_each              = toset(var.domains)
+  name                  = "vnl_${each.key}"
   resource_group_name   = azurerm_resource_group.main.name
-  private_dns_zone_name = azurerm_private_dns_zone.main.name
+  private_dns_zone_name = azurerm_private_dns_zone.main[*].name
   virtual_network_id    = azurerm_virtual_network.main.id
 }
 
-output "nameservers" {
-  value = azurerm_dns_zone.main.name_servers
-}
 output "proxy-ipv6" {
   value = azurerm_public_ip.ipv6[*].ip_address
 }

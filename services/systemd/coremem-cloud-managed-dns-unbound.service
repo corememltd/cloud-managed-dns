@@ -1,0 +1,13 @@
+[Unit]
+Description=coreMem Limited Cloud Managed DNS Unbound Configuration
+Before=unbound.service
+Requisite=unbound.service
+
+[Service]
+Type=oneshot
+TimeoutSec=10
+ExecStart=/opt/coremem/cloud-managed-dns/services/coremem-cloud-managed-dns-unbound.sh
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=unbound.service

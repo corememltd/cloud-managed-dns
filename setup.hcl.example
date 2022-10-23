@@ -1,4 +1,6 @@
-domain = "example.invalid"
+domains = [
+  "example.invalid"
+]
 location = "uksouth"
 size = "Standard_B1ls"
 allowed_ips = [

@@ -4,10 +4,10 @@ SHELL = /bin/sh
 VENDOR ?= coremem
 PROJECT ?= cloud-managed-dns
 
-COMMITID = $(shell git rev-parse --short HEAD | tr -d '\n')$(shell git diff-files --quiet || printf -- -dirty)
+COMMITID = $(shell git describe --always --dirty)
 
-TERRAFORM_VERSION = 1.2.4
-PACKER_VERSION = 1.8.2
+TERRAFORM_VERSION = 1.3.3
+PACKER_VERSION = 1.8.3
 
 TERRAFORM_BUILD_FLAGS = -compact-warnings
 define BUILD_FLAGS_template =
@@ -48,24 +48,33 @@ else
 endif
 endif
 
-.PHONY: build-proxy
-build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer
-	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve --target azurerm_resource_group.main >&-
+.PHONY: onpremise-build-resolver
+onpremise-build-resolver: setup.resolver.pkr.hcl .stamp.packer | notdirty
 	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
-.PHONY: deploy-authoritative
-deploy-authoritative: setup.tf .stamp.terraform
+.PHONY: azure-build-proxy
+azure-build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer | notdirty
+	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target azurerm_resource_group.main >&-
+	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
+
+.PHONY: azure-deploy
+deploy-azure: setup.tf .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones >&-
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve
 
-.PHONY: undeploy-authoritative
-undeploy-authoritative: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_network_security_group.main azurerm_private_dns_zone.main
-undeploy-authoritative: setup.tf .stamp.terraform
+.PHONY: azure-undeploy
+azure-undeploy: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_network_security_group.main azurerm_private_dns_zone.main
+azure-undeploy: setup.tf .stamp.terraform
 	$(foreach TARGET,$(TARGETS),./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target $(TARGET);)
 
 id_rsa id_rsa.pub &:
 	ssh-keygen -q -t rsa -N '' -f id_rsa
 CLEAN += id_rsa id_rsa.pub
+
+.stamp.packer.resolver: setup.resolver.pkr.hcl packer setup.hcl account.json
+	./packer validate $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
+	@touch $@
+CLEAN += .stamp.packer.resolver
 
 .stamp.packer: setup.pkr.hcl packer setup.hcl account.json
 	./packer validate $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
