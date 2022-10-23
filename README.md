@@ -136,6 +136,8 @@ You should not need to ever log into the proxy resolvers but as they are configu
 
         sudo userdel -r ubuntu
 
+**N.B.** you will need to redo this each time you update the domains list in `setup.hcl` as the VMs are rebuilt
+
 ## Importing
 
 You now need to populate your Azure DNS resources with records. You can do this manually via the web portal or CLI, but it is far more reliable where possible to use the Azure zone importing functionality built into the CLI tool.

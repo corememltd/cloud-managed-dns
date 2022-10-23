@@ -18,6 +18,7 @@ apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-conf
 		--option=Dpkg::options::=--force-unsafe-io install --no-install-recommends \
 	git \
 	jq \
+	m4 \
 	unbound
 apt-get -y autoremove
 apt-get clean
