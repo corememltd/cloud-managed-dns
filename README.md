@@ -94,11 +94,11 @@ You should follow the instructions shown there to authorise the CLI tooling to p
 
 Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
 
-    make azure-build-proxy
+    make build-proxy
 
 Once the image has been cooked, you can now deploy the infrastructure for this with:
 
-    make azure-deploy
+    make deploy
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
 
@@ -248,7 +248,7 @@ If you are SSHed into the proxy resolver, you instead would use:
 
 To remove the in production deployment, simply run from within the project directory:
 
-    make azure-undeploy
+    make undeploy
 
 A few items are purposely protected and will require manual deletion:
 

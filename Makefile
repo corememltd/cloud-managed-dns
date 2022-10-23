@@ -48,27 +48,23 @@ else
 endif
 endif
 
-.PHONY: onpremise-build-resolver
-onpremise-build-resolver: setup.resolver.pkr.hcl .stamp.packer | notdirty
-	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
-
-.PHONY: azure-build-proxy
-azure-build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer | notdirty
+.PHONY: build-proxy
+build-proxy: setup.pkr.hcl .stamp.terraform .stamp.packer | notdirty
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target azurerm_resource_group.main >&-
 	env TMPDIR='$(CURDIR)' ./packer build -force $(PACKER_BUILD_FLAGS) -var-file=setup.hcl $<
 
-.PHONY: azure-deploy
-azure-deploy: setup.tf .stamp.terraform
+.PHONY: deploy
+deploy: setup.tf .stamp.terraform
 	./terraform apply $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target random_shuffle.zones >&-
 	./terraform $(if $(DRYRUN),plan,apply) $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve
 
-.PHONY: azure-refresh
-azure-refresh: setup.tf .stamp.terraform
+.PHONY: refresh
+refresh: setup.tf .stamp.terraform
 	./terraform refresh $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl >&-
 
-.PHONY: azure-undeploy
-azure-undeploy: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_network_security_group.main azurerm_private_dns_zone.main
-azure-undeploy: setup.tf .stamp.terraform
+.PHONY: undeploy
+undeploy: TARGETS = azurerm_linux_virtual_machine.main azurerm_virtual_network.main azurerm_network_security_group.main azurerm_private_dns_zone.main
+undeploy: setup.tf .stamp.terraform
 	$(foreach TARGET,$(TARGETS),./terraform destroy $(TERRAFORM_BUILD_FLAGS) -var-file=setup.hcl -auto-approve -target $(TARGET);)
 
 id_rsa id_rsa.pub &:
