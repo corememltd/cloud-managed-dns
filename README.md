@@ -176,7 +176,7 @@ Points to be aware of:
  * externally, *only* records in the public view will be returned
  * internally, *only* records in the private view will be returned
      * records from the public view do not back fill
-           * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
+         * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
  * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
      * so not `192.168.0.0/16` or `fc00::/7`
 
