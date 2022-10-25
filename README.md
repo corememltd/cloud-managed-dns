@@ -167,6 +167,8 @@ Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) 
 
 The configuration installed will serve stale records for up to 24 hours (`/etc/unbound/unbound.conf.d/stale.conf`) in case there is a problem with reaching the upstream Azure hosted proxies.
 
+You may need to edit `/etc/unbound/unbound.conf.d/listen.conf` to add additional source IP ranges that can query your resolver.
+
 # Usage and Testing
 
 This section will walk you through testing your service before putting it into production.

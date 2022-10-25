@@ -26,10 +26,12 @@ apt-get clean
 
 cat <<'EOF' > /etc/unbound/unbound.conf.d/listen.conf
 server:
-    interface: eth0
-    interface: 127.0.0.1
-    access-control: 0.0.0.0/0 allow
-    access-control: ::/0 allow
+    interface: 0.0.0.0
+    interface: ::
+    access-control: 10.0.0.0/8 allow
+    access-control: 172.16.0.0/12 allow
+    access-control: 192.168.0.0/16 allow
+    access-control: fc::/7 allow
     access-control: 127.0.0.0/8 allow_snoop
     access-control: ::1 allow_snoop
 EOF
