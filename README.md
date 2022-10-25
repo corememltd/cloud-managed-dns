@@ -165,7 +165,7 @@ Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) 
 
 **N.B.** `DOMAINS` is a list of the domains comma separated you added to `setup.hcl` and `NSS` is the list of all the IPs returned comma separated for the Azure hosted DNS proxies
 
-The configuration installed will serve stale records for up to 24 hours (`/etc/unbound/unbound.conf.d/stale.conf`) incase there is a problem with reaching the upstream Azure hosted proxies.
+The configuration installed will serve stale records for up to 24 hours (`/etc/unbound/unbound.conf.d/stale.conf`) in case there is a problem with reaching the upstream Azure hosted proxies.
 
 # Usage and Testing
 
@@ -173,11 +173,10 @@ This section will walk you through testing your service before putting it into p
 
 Points to be aware of:
 
- * records in the private view take precedence over the records in the public view
-     * externally, if a record exists in the private view but not public, then the response will be `NXDOMAIN`
-     * externally, if a record exists in both the private and public views, then the response will be the public one
-     * internally, if a record exists in the private view but not public, then the response will be the private one
-     * internally, if a record exists in both the private and public views, then the response will be the private one
+ * externally, *only* records in the public view will be returned
+ * internally, *only* records in the private view will be returned
+     * records from the public view do not back fill
+           * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
  * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
      * so not `192.168.0.0/16` or `fc00::/7`
 
