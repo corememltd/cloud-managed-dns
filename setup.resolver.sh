@@ -31,7 +31,7 @@ server:
     access-control: 10.0.0.0/8 allow
     access-control: 172.16.0.0/12 allow
     access-control: 192.168.0.0/16 allow
-    access-control: fc::/7 allow
+    access-control: fc00::/7 allow
     access-control: 127.0.0.0/8 allow_snoop
     access-control: ::1 allow_snoop
 EOF
