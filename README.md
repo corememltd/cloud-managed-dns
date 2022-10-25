@@ -155,7 +155,17 @@ Once you have imported the records, you should be able to test them as detailed 
 
 ## Recursive DNS (On-Premises)
 
-...[work in progress](https://github.com/corememltd/cloud-managed-dns/issues/2)
+Each on-premise environment is different, and forcing the administrator to use a given orchestration tool will not fly.
+
+Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) that you should copy to a fresh recent Debian (11.x) or Ubuntu (22.04) based system and run there as `root` the following:
+
+    export DOMAINS=example.com,example.org
+    export NSS=192.0.2.1,192.0.2.241,2001:db8::1234,2001:db8::9876
+    sh setup.resolver.sh
+
+**N.B.** `DOMAINS` is a list of the domains comma separated you added to `setup.hcl` and `NSS` is the list of all the IPs returned comma separated for the Azure hosted DNS proxies
+
+The configuration installed will serve stale records for up to 24 hours (`/etc/unbound/unbound.conf.d/stale.conf`) incase there is a problem with reaching the upstream Azure hosted proxies.
 
 # Usage and Testing
 
