@@ -157,7 +157,7 @@ Once you have imported the records, you should be able to test them as detailed 
 
 Each on-premise environment is different, and forcing the administrator to use a given orchestration tool will not fly.
 
-Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) that you should copy to a fresh recent Debian (11.x) or Ubuntu (22.04) based system and run there as `root` the following:
+Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) that you should copy to a fresh recent Debian or Ubuntu based system and run there as `root` the following:
 
     export DOMAINS=example.com,example.org
     export NSS=192.0.2.1,192.0.2.241,2001:db8::1234,2001:db8::9876
