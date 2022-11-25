@@ -187,10 +187,10 @@ As an example of how to do this, you may wish to add the following to `/etc/unbo
     stub-zone:
         name: subdomain.example.com
         stub-prime: yes
-        stub-addr: 192.0.2.100		# ns1.subdomain.example.com.
-        stub-addr: 2001:db8::aaaa	# ns1.subdomain.example.com.
-        stub-addr: 192.0.2.101		# ns2.subdomain.example.com.
-        stub-addr: 2001:db8::bbbb	# ns2.subdomain.example.com.
+        stub-addr: 192.0.2.100     # ns1.subdomain.example.com.
+        stub-addr: 2001:db8::aaaa  # ns1.subdomain.example.com.
+        stub-addr: 192.0.2.101     # ns2.subdomain.example.com.
+        stub-addr: 2001:db8::bbbb  # ns2.subdomain.example.com.
 
 # Usage and Testing
 
