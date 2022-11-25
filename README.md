@@ -169,7 +169,7 @@ The configuration installed will serve stale records for up to 24 hours (`/etc/u
 
 You may need to edit `/etc/unbound/unbound.conf.d/listen.conf` to add additional source IP ranges that can query your resolver.
 
-## Zone Delegations (`NS` records)
+### Zone Delegations (`NS` records)
 
 Azure Private DNS [does not support zone delegations](https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions) so you need to configure unbound to do this on your behalf.
 
