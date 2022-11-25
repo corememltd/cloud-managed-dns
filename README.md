@@ -169,6 +169,29 @@ The configuration installed will serve stale records for up to 24 hours (`/etc/u
 
 You may need to edit `/etc/unbound/unbound.conf.d/listen.conf` to add additional source IP ranges that can query your resolver.
 
+## Zone Delegations (`NS` records)
+
+Azure Private DNS [does not support zone delegations](https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions) so you need to configure unbound to do this on your behalf.
+
+**N.B.** it is recommended you do this on your on-premise recursive resolvers but you may decide for local reasons you want to do it on the proxy DNS systems
+
+As an example of how to do this, you may wish to add the following to `/etc/unbound/unbound.conf.d/delegations.conf`:
+
+    # Azure Private DNS does not support delegation (ie. NS records)
+    # https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions
+    # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-stub
+    server:
+        domain-insecure: "subdomain.example.com."
+    
+    # dig NS subdomain.example.com @ns2.subdomain.example.com.
+    stub-zone:
+        name: subdomain.example.com
+        stub-prime: yes
+        stub-addr: 192.0.2.100		# ns1.subdomain.example.com.
+        stub-addr: 2001:db8::aaaa	# ns1.subdomain.example.com.
+        stub-addr: 192.0.2.101		# ns2.subdomain.example.com.
+        stub-addr: 2001:db8::bbbb	# ns2.subdomain.example.com.
+
 # Usage and Testing
 
 This section will walk you through testing your service before putting it into production.
@@ -244,7 +267,6 @@ If you are SSHed into the proxy resolver, you instead would use:
 **N.B.** do not change [`168.63.129.16` as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
 
 ## Placing into Production
-
 
  * **`nameservers`:** nameservers to use when going live for your domain
      * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
