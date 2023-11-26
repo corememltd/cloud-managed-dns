@@ -175,6 +175,8 @@ Now we deploy the entire infrastructure using:
     terraform apply ${COMMIT:+--var commit=$COMMIT} -var-file=setup.hcl -auto-approve -target random_shuffle.zones
     terraform apply ${COMMIT:+--var commit=$COMMIT} -var-file=setup.hcl -auto-approve
 
+**N.B.** it is safe here to ignore the 'target' related warnings when running `terraform`
+
 ####
 
 https://learn.microsoft.com/en-us/azure/dns/private-dns-virtual-network-links
