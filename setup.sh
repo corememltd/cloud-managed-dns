@@ -41,8 +41,8 @@ mkdir /opt/$VENDOR
 git -c advice.detachedHead=false clone /tmp/bundle.git /opt/$VENDOR/$PROJECT
 shred -u /tmp/bundle.git
 
-# https://github.com/NLnetLabs/unbound/issues/769
 ln -s -t /usr/local/lib/python3.11/dist-packages /usr/lib/python3/dist-packages/unboundmodule.py
+# https://github.com/NLnetLabs/unbound/issues/769
 cat <<'EOF' > /etc/apparmor.d/local/usr.sbin.unbound
 /usr/local/lib/python3.11/dist-packages/ r,
 /usr/local/lib/python3.11/dist-packages/** r,

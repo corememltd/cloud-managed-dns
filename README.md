@@ -99,7 +99,11 @@ To test that you have everything configured correctly, run the following:
 
     terraform init
     terraform validate
+    
+    packer init -var-file=setup.hcl setup.pkr.hcl
     packer validate -var-file=setup.hcl setup.pkr.hcl
+    # https://github.com/hashicorp/packer-plugin-azure/issues/58
+    az account set --subscription 00000000-0000-0000-0000-000000000000
 
 # Deploy
 
@@ -161,10 +165,12 @@ Once you have a zone file, you can import it using (replacing the `-n` and `-f` 
 Run the following:
 
     COMMIT=$(git describe --always --dirty)
-    terraform apply -var commit=$COMMIT -var-file=setup.hcl -auto-approve -target azurerm_resource_group.main
-    packer build -var commit=$COMMIT -var-file=setup.hcl setup.pkr.hcl
+    terraform apply ${COMMIT:+-var commit=$COMMIT} -var-file=setup.hcl -auto-approve -target azurerm_resource_group.main
+    packer build ${COMMIT:+-var commit=$COMMIT} -var-file=setup.hcl setup.pkr.hcl
 
 **N.B.** it is safe here to ignore the 'target' related warnings when running `terraform`
+
+After some time (typically five to ten minutes) it should complete building the OS image to be used by the DNS proxies.
 
 ####
 

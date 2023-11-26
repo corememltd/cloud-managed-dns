@@ -26,6 +26,15 @@ locals {
   account = jsondecode(file("account.json"))
 }
 
+packer {
+  required_plugins {
+    azure = {
+      source  = "github.com/hashicorp/azure"
+      version = "~> 2"
+    }
+  }
+}
+
 source "azure-arm" "main" {
   use_azure_cli_auth = true
 
