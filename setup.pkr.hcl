@@ -54,6 +54,7 @@ source "azure-arm" "main" {
   vm_size = var.size
 
   os_type = "Linux"
+  os_disk_size_gb = 10
 
   # https://wiki.debian.org/Cloud/MicrosoftAzure#Access_via_Azure_Resource_Manager_.28ARM.29
   image_publisher = "Debian"
