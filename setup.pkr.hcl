@@ -55,9 +55,11 @@ source "azure-arm" "main" {
 
   os_type = "Linux"
 
-  image_publisher = "Canonical"
-  image_offer     = "0001-com-ubuntu-server-jammy"
-  image_sku       = "22_04-lts-gen2"
+  # https://wiki.debian.org/Cloud/MicrosoftAzure#Access_via_Azure_Resource_Manager_.28ARM.29
+  image_publisher = "Debian"
+  image_offer     = "debian-12"
+  # change to '12-gen2-arm64' if you are using an ARM64 virtual machine
+  image_sku       = "12-gen2"
   image_version   = "latest"
 
   managed_image_resource_group_name = var.group
