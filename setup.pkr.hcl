@@ -58,7 +58,7 @@ source "azure-arm" "main" {
   # https://wiki.debian.org/Cloud/MicrosoftAzure#Access_via_Azure_Resource_Manager_.28ARM.29
   image_publisher = "Debian"
   image_offer     = "debian-12"
-  # change to '12-arm64' if you are using an ARM64 virtual machine
+  # change from '12-gen2' to '12-arm64' if you are using an ARM64 virtual machine
   image_sku       = "12-gen2"
   image_version   = "latest"
 
