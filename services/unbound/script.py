@@ -32,10 +32,8 @@ def _peer(qstate):
 
     return f'[{addr}]:{q.port}'
 
-def _error(module_id, event, qstate, qdata, peer, rcode=RCODE_SERVFAIL, reason=None):
+def _error(module_id, event, qstate, qdata, peer, rcode, reason):
 
-    if reason is None:
-        reason = 'refused' if rcode == RCODE_REFUSED else f'error {rcode}'
     log_warn(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str} reason={reason}')
     qstate.return_rcode = rcode
     qstate.ext_state[module_id] = MODULE_FINISHED
@@ -85,7 +83,7 @@ def operate(module_id, event, qstate, qdata):
     if response.rcode() not in (NOERROR, NXDOMAIN):
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({response.rcode().name})')
     if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname != 'azureprivatedns.net.'):
-        return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED)
+        return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED, 'refused')
 
     log_info(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str}')
     qstate.ext_state[module_id] = MODULE_WAIT_MODULE
