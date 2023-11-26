@@ -1,8 +1,6 @@
-domains = [
-  "example.invalid"
-]
 location = "uksouth"
-size = "Standard_B1ls"
+group = "cloud-managed-dns"
+size = "Standard_B2ts_v2"
 allowed_ips = [
   "2001:db8::/32",
   "192.0.2.0/24",

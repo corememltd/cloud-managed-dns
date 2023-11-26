@@ -1,9 +1,4 @@
-variable "vendor" {
-  type = string
-  nullable = false
-  default = "coremem"
-}
-variable "project" {
+variable "group" {
   type = string
   nullable = false
   default = "cloud-managed-dns"
@@ -14,11 +9,6 @@ variable "commit" {
   default = "dev"
 }
 
-variable "domains" {
-  type = list(string)
-  nullable = false
-  description = "The domains you are hosting, such as 'example.invalid'"
-}
 variable "location" {
   type = string
   nullable = false
@@ -28,7 +18,7 @@ variable "location" {
 variable "size" {
   type = string
   nullable = false
-  default = "Standard_B1ls"
+  default = "Standard_B2ts_v2"
   description = "Specify the size of VM instance to use (https://docs.microsoft.com/azure/virtual-machines/sizes)"
 }
 variable "allowed_ips" {
@@ -42,7 +32,7 @@ locals {
 }
 
 terraform {
-  required_version = ">= 1.3.0"
+  required_version = ">= 1.6.0"
 
   required_providers {
     azurerm = {
@@ -73,7 +63,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "${var.vendor}-${var.project}"
+  name     = var.group
   location = var.location
   tags     = {
     Vendor  = "coreMem Limited"
@@ -105,34 +95,6 @@ resource "azurerm_network_security_group" "main" {
   name                = "nsg"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-}
-
-resource "azurerm_network_security_rule" "icmp" {
-  name                        = "nsr-icmp"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Icmp"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
-}
-
-resource "azurerm_network_security_rule" "ssh" {
-  name                        = "nsr-ssh"
-  priority                    = 500
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "22"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
 }
 
 resource "azurerm_network_security_rule" "dns-udp" {
@@ -251,19 +213,13 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name             = azurerm_resource_group.main.name
   zone                            = local.zones[count.index]
   size                            = var.size
-  custom_data                     = base64encode(jsonencode({"domains"=var.domains}))
   admin_username                  = "ubuntu"
   disable_password_authentication = true
   network_interface_ids = [
     azurerm_network_interface.main[count.index].id,
   ]
 
-  admin_ssh_key {
-    username = "ubuntu"
-    public_key = file("id_rsa.pub")
-  }
-
-  source_image_id = "/subscriptions/${local.account.id}/resourceGroups/${azurerm_resource_group.main.name}/providers/Microsoft.Compute/images/dns-proxy-resolver"
+  source_image_id = "/subscriptions/${local.account.id}/resourceGroups/${azurerm_resource_group.main.name}/providers/Microsoft.Compute/images/dns-proxy"
 
   os_disk {
     storage_account_type = "Standard_LRS"
@@ -271,37 +227,15 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 }
 
-resource "azurerm_dns_zone" "main" {
-  for_each            = toset(var.domains)
-  name                = each.key
-  resource_group_name = azurerm_resource_group.main.name
-
-  # force the user to have to manually delete this as the
-  # APEX NS records on the zone are randomly chosen by
-  # Azure on creation which is unlikely to match the NS
-  # records configured with the domain name registrar
-  lifecycle {
-    prevent_destroy = true
-  }
+output "proxy-0-ipv6" {
+  value = azurerm_public_ip.ipv6[0].ip_address
 }
-
-resource "azurerm_private_dns_zone" "main" {
-  for_each            = toset(var.domains)
-  name                = each.key
-  resource_group_name = azurerm_resource_group.main.name
+output "proxy-0-ipv4" {
+  value = azurerm_public_ip.ipv4[0].ip_address
 }
-
-resource "azurerm_private_dns_zone_virtual_network_link" "main" {
-  for_each              = toset(var.domains)
-  name                  = "vnl_${each.key}"
-  resource_group_name   = azurerm_resource_group.main.name
-  private_dns_zone_name = azurerm_private_dns_zone.main[each.key].name
-  virtual_network_id    = azurerm_virtual_network.main.id
+output "proxy-1-ipv6" {
+  value = azurerm_public_ip.ipv6[1].ip_address
 }
-
-output "proxy-ipv6" {
-  value = azurerm_public_ip.ipv6[*].ip_address
-}
-output "proxy-ipv4" {
-  value = azurerm_public_ip.ipv4[*].ip_address
+output "proxy-1-ipv4" {
+  value = azurerm_public_ip.ipv4[1].ip_address
 }

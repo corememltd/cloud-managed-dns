@@ -1,8 +1,4 @@
-variable "vendor" {
-  type = string
-  default = "coremem"
-}
-variable "project" {
+variable "group" {
   type = string
   default = "cloud-managed-dns"
 }
@@ -11,10 +7,6 @@ variable "commit" {
   default = "dev"
 }
 
-variable "domains" {
-  type = list(string)
-  description = "The domains you are hosting, such as 'example.invalid'"
-}
 variable "location" {
   type = string
   default = "uksouth"
@@ -22,7 +14,7 @@ variable "location" {
 }
 variable "size" {
   type = string
-  default = "Standard_B1ls"
+  default = "Standard_B2ts_v2"
   description = "Specify the size of VM instance to use (https://docs.microsoft.com/azure/virtual-machines/sizes)"
 }
 variable "allowed_ips" {
@@ -59,9 +51,9 @@ source "azure-arm" "main" {
   image_sku       = "22_04-lts-gen2"
   image_version   = "latest"
 
-  managed_image_resource_group_name = "${var.vendor}-${var.project}"
+  managed_image_resource_group_name = var.group
   managed_image_zone_resilient = true
-  managed_image_name = "dns-proxy-resolver"
+  managed_image_name = "dns-proxy"
 }
 
 build {
@@ -78,20 +70,20 @@ build {
   provisioner "shell-local" {
     inline_shebang = "/bin/sh -eux"
     inline = [
-      "git bundle create ${var.vendor}-${var.project}.git HEAD"
+      "git bundle create bundle.git HEAD"
     ]
   }
 
   provisioner "file" {
     generated = true
-    source = "${var.vendor}-${var.project}.git"
-    destination = "/tmp/${var.vendor}-${var.project}.git"
+    source = "bundle.git"
+    destination = "/tmp/bundle.git"
   }
 
   provisioner "shell-local" {
     inline_shebang = "/bin/sh -eux"
     inline = [
-      "rm ${var.vendor}-${var.project}.git"
+      "rm bundle.git"
     ]
   }
 
