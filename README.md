@@ -177,7 +177,23 @@ Now we deploy the entire infrastructure using:
 
 **N.B.** it is safe here to ignore the 'target' related warnings when running `terraform`
 
-####
+When the process completes (typically five to ten minutes) you will be [returned output](https://www.terraform.io/language/values/outputs) that resembles:
+
+    dns-proxy-0-ipv4 = "192.0.2.4"
+    dns-proxy-0-ipv6 = "2001:db8:100:8::43"
+    dns-proxy-1-ipv4 = "192.0.2.79"
+    dns-proxy-1-ipv6 = "2001:db8:100:8::2e"
+
+These are the IP addresses of the Azure hosted DNS proxies.
+
+To test everything is working, by running on a system using an IP you provided in `setup.hcl`, you should be able to run the following DNS proxies and see something like the following:
+
+    $ dig -c CH -t TXT version.server @192.0.2.4
+    "unbound 1.17.1"
+
+### Access to the Private DNS Zones
+
+
 
 https://learn.microsoft.com/en-us/azure/dns/private-dns-virtual-network-links
 
@@ -216,18 +232,6 @@ Once the image has been cooked, you can now deploy the infrastructure for this w
     make deploy
 
 **N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
-
-When the process completes (first run will take at least ten minutes), you will be [returned output](https://www.terraform.io/language/values/outputs) that resembles the *example* below:
-
-    proxy-ipv6 = [
-      "2001:db8:100:8::43",
-      "2001:db8:100:8::2e"
-    ]
-    proxy-ipv4 = [
-      "192.0.2.4",
-      "192.0.2.79"
-    ]
-
 Where:
 
  * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
@@ -349,6 +353,7 @@ Once you have created the private zones, you need to create virtual network link
 
 First check that the proxy resolvers are working (they may take a few minutes to start for the first time) by running the following command from a workstation holding one of the IP addresses you listed in `allowed_ips` earlier in `setup.hcl`:
 
+  dig @51.145.109.112 +short -c CH -t TXT version.server
     dig @192.0.2.4 SOA example.com
 
 Where `192.0.2.4` is one of the IPs return earlier in `proxy-ipv6` and `proxy-ipv4`.
@@ -441,4 +446,49 @@ Only a single person may use the deploy and decommissioning process below at a t
  * fork this project, edit `.gitignore` to no longer ignore `terraform.tfstate` by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
  * store the file on some networking resource (eg. Microsoft Windows/Samba share, NFS, SFTP, Dropbox, ...)
 
+# Troubleshooting
 
+## Accessing the DNS Proxies
+
+To initially access the proxy, you use the [serial port](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/serial-console-overview)
+
+    az extension add --name serial-console --upgrade
+
+To enable the serial console, run the following:
+
+    az vm boot-diagnostics enable --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0
+    az vm boot-diagnostics enable --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-1
+
+Now to access the serial port (of `dns-proxy-0`) run:
+
+    az serial-console connect --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0
+
+Log in as `root`, no password is required; do not freak out as SSH is configured with `PermitRootLogin no` and `PasswordAuthentication no` whilst `/etc/securetty` only allows the console and serial port.
+
+Using the serial port is somewhat slow (and glitchy if you are unfamilar with the process) so using this access you should arrange SSH access for youself:
+
+ 1. create yourself a user:
+
+        useradd -U -G sudo -m -s /bin/bash bob
+
+ 1. set a password on the account for the purposes of using `sudo`:
+
+        passwd bob
+
+ 1. add your SSH key:
+
+        sudo -s -u bob
+        mkdir ~/.ssh
+        vim ~/.ssh/authorized_keys
+
+ 1. update the firewall to allow access to the VMs from your IP address:
+
+        az network nsg rule create --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --priority 2000 --nsg-name nsg --name ssh-0 --source-address-prefixes 192.0.2.0/24 --protocol Tcp --destination-port-ranges 22 --access Allow
+
+    **N.B.** run this command multiple times if you need additional IP ranges, but remember to update `name` and increment `priority`
+
+You should now be able to SSH into the system either directly by IP or using:
+
+    az ssh vm --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0 --local-user bob
+
+Remember to log out of the serial console one you have finished (typing `exit` or `logout` until you see the login prompt) and then disconnect by pressing `Ctrl`+`]` followed by `q`.

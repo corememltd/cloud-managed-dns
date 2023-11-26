@@ -29,6 +29,13 @@ variable "allowed_ips" {
 locals {
   account = jsondecode(file("account.json"))
   zones = sort(random_shuffle.zones.result)
+
+  # Azure will not let us create a VM without admin credentials
+  custom_data = <<CUSTOM_DATA
+#!/bin/sh
+userdel -f -r packer
+userdel -f -r notroot
+CUSTOM_DATA
 }
 
 terraform {
@@ -208,13 +215,12 @@ resource "azurerm_network_interface_security_group_association" "main" {
 resource "azurerm_linux_virtual_machine" "main" {
   count = length(local.zones)
 
-  name                            = "vm-${count.index}"
+  name                            = "dns-proxy-${count.index}"
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
   zone                            = local.zones[count.index]
   size                            = var.size
-  admin_username                  = "ubuntu"
-  disable_password_authentication = true
+
   network_interface_ids = [
     azurerm_network_interface.main[count.index].id,
   ]
@@ -222,20 +228,27 @@ resource "azurerm_linux_virtual_machine" "main" {
   source_image_id = "/subscriptions/${local.account.id}/resourceGroups/${azurerm_resource_group.main.name}/providers/Microsoft.Compute/images/dns-proxy"
 
   os_disk {
+    disk_size_gb         = 10
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
   }
+
+  # do not freak out, we burn this immediately via custom_data
+  disable_password_authentication = false
+  admin_username = "notroot"
+  admin_password = "notValid12$"
+  custom_data = base64encode(local.custom_data)
 }
 
-output "proxy-0-ipv6" {
+output "dns-proxy-0-ipv6" {
   value = azurerm_public_ip.ipv6[0].ip_address
 }
-output "proxy-0-ipv4" {
+output "dns-proxy-0-ipv4" {
   value = azurerm_public_ip.ipv4[0].ip_address
 }
-output "proxy-1-ipv6" {
+output "dns-proxy-1-ipv6" {
   value = azurerm_public_ip.ipv6[1].ip_address
 }
-output "proxy-1-ipv4" {
+output "dns-proxy-1-ipv4" {
   value = azurerm_public_ip.ipv4[1].ip_address
 }
