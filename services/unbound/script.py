@@ -12,7 +12,7 @@ import random
 import time
 from dns.exception import Timeout
 import dns.query
-from dns.rcode import NOERROR
+from dns.rcode import NOERROR, NXDOMAIN
 from dns.rdatatype import SOA
 
 def _peer(qstate):
@@ -82,8 +82,8 @@ def operate(module_id, event, qstate, qdata):
         break
     if response is None:
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, 'timeout')
-    if response.rcode() != NOERROR:
-        return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({qstate.return_rcode})')
+    if response.rcode() not in (NOERROR, NXDOMAIN):
+        return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({response.rcode().name})')
     if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname != 'azureprivatedns.net.'):
         return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED)
 
