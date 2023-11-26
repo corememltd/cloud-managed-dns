@@ -12,7 +12,7 @@ import random
 import time
 from dns.exception import Timeout
 import dns.query
-from dns.rcode import REFUSED
+from dns.rcode import NOERROR
 from dns.rdatatype import SOA
 
 def _peer(qstate):
@@ -32,21 +32,14 @@ def _peer(qstate):
 
     return f'[{addr}]:{q.port}'
 
-def __warn(module_id, event, qstate, qdata, peer, reason):
+def _error(module_id, event, qstate, qdata, peer, rcode=RCODE_SERVFAIL, reason=None):
 
+    if reason is None:
+        reason = 'refused' if rcode == RCODE_REFUSED else f'error {rcode}'
     log_warn(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str} reason={reason}')
+    qstate.return_rcode = rcode
     qstate.ext_state[module_id] = MODULE_FINISHED
     return True
-
-def _timeout(module_id, event, qstate, qdata, peer):
-
-    qstate.return_rcode = RCODE_SERVFAIL
-    return __warn(module_id, event, qstate, qdata, peer, 'timeout')
-
-def _refused(module_id, event, qstate, qdata, peer):
-
-    qstate.return_rcode = RCODE_REFUSED
-    return __warn(module_id, event, qstate, qdata, peer, 'refused')
 
 def init_standard(module_id, env):
 
@@ -75,11 +68,10 @@ def operate(module_id, event, qstate, qdata):
         return True
 
     if qstate.qinfo.qclass != RR_CLASS_IN:
-        return _refused(module_id, event, qstate, qdata, peer)
+        return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED)
 
-    # by disabling recursion Azure returns REFUSED if this is a linked zone
     qname = qstate.qinfo.qname_str.lower()
-    query = dns.message.make_query(qname=qname, rdtype=SOA, flags=0)
+    query = dns.message.make_query(qname=qname, rdtype=SOA)
     response = None
     for i in range(3):
         try:
@@ -89,9 +81,11 @@ def operate(module_id, event, qstate, qdata):
             continue
         break
     if response is None:
-        return _timeout(module_id, event, qstate, qdata, peer)
-    if response.rcode() != REFUSED:
-        return _refused(module_id, event, qstate, qdata, peer)
+        return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, 'timeout')
+    if response.rcode() != NOERROR:
+        return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({qstate.return_rcode})')
+    if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname != 'azureprivatedns.net.'):
+        return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED)
 
     log_info(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str}')
     qstate.ext_state[module_id] = MODULE_WAIT_MODULE
