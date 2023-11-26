@@ -228,7 +228,6 @@ resource "azurerm_linux_virtual_machine" "main" {
   source_image_id = "/subscriptions/${local.account.id}/resourceGroups/${azurerm_resource_group.main.name}/providers/Microsoft.Compute/images/dns-proxy"
 
   os_disk {
-    disk_size_gb         = 10
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
   }
