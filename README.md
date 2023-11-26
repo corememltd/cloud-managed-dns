@@ -21,12 +21,21 @@ The expected DNS infrastructure topology this project supports is:
     +------------------------------+            |#############                ||               |
                                                 +----------------------------------------------+
 
-Out of scope to this project is the right hand side of the diagram encompassing the public DNS zone; here the focus is on the left side on-premise private DNS componment.
+Out of scope to this project is the right hand side of the diagram encompassing the public DNS zone; here the focus is on the left side on-premise private DNS component.
+
+Points to be aware of:
+
+ * externally (ie. 'Internet User' on the right), *only* records in the public view will be returned
+ * internally (ie. 'On-Premise' on the left), *only* records in the private view will be returned
+     * records from the public view do not back fill into the private zone
+         * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
+ * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
+     * so not `192.168.0.0/16` or `fd00::/8`
 
 There should be no need for you to interact with the Azure deployment other than to maintain your zones. The on-premise resolver may be anything of your choosing but this project does provide a suitable example Unbound configuration for you to use if you wish.
 
 Though this project uses Hashicorp's Packer and Terraform tooling for deploying, there is no need for you to learn or understand these tools other than to install them.
-A
+
 ## Related Links
 
  * [Azure](https://docs.microsoft.com/azure/)
@@ -89,9 +98,9 @@ Now edit `setup.hcl` to set at least the following to your needs:
      * if you have several global sites, then you can deploy this service multiple times and they will act independently of one another
  * **`size` (default `Standard_B2ts_v2`):** instance size to use for Azure proxy DNS systems
      * suitable options are `Standard_B2ts_v2` (~$10/month) and `Standard_B2ats_v2` (~$10/month)
-     * unscientific benchmarking with `dnsperf` against a `Standard_B2ts_v2` benchmarks above 10krps
+     * unscientific bench marking with `dnsperf` against a `Standard_B2ts_v2` benchmarks ~10krps
         * remember this is only for resolving your local private zone and your actual demands are going to be far lower still as the on-premise resolver will cache results
-        * most deployments should expect the order of 100rps initially when restaring the on-premise resolver and then once the cache warms up dropping to less than 10rps
+        * most deployments should expect the order of 100rps initially when restarting the on-premise resolver and then once the cache warms up dropping to less than 10rps
  * **`allowed_ips`:** this must encompass at least the (public) IPs of your on-premises DNS resolvers
      * if you are using [NAT](https://en.wikipedia.org/wiki/Network_address_translation) do *not* list your internal on-premise addresses as those will not be seen by Azure, you must use the public IP(s) of your NAT
 
@@ -105,15 +114,27 @@ To test that you have everything configured correctly, run the following:
     # https://github.com/hashicorp/packer-plugin-azure/issues/58
     az account set --subscription 00000000-0000-0000-0000-000000000000
 
+## Safe Usage of Terraform
+
+Terraform unfortunately needs to store information locally that describes the cloud deployment it manages, it does this by storing its state in a file named `terraform.tfstate`.
+
+Only a single person at any moment may deploy (or decommission) the service and so when doing so you must pass around the latest version of the `terraform.tfstate` around your team; of course if you are a team of one you may ignore this to some extent but do *not* delete the file.
+
+There are several ways that you may use in which to do this, and of course every team is different, but I would recommend either:
+
+ * [recommended] store the [`.tfstate` file in Azure Storage](https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli)
+ * fork this project, edit `.gitignore` to no longer ignore `terraform.tfstate` by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
+ * store the file on some networking resource (eg. Microsoft Windows/Samba share, NFS, SFTP, Dropbox, ...)
+
 # Deploy
 
 The deployment of the service has several parts that are tackled in the following order:
 
- 1. Azure Private DNS service and the zones
+ 1. Azure Private DNS zones
  1. Azure hosted DNS proxies
  1. On-premise resolvers
 
-Thoughout the instructions we will assume your environment has the following values:
+Throughout the instructions we will assume your environment has the following values:
 
  * the Azure Subscription you are deploying into has the value `00000000-0000-0000-0000-000000000000`
  * the Azure location you wish to deploy to is `uksouth`
@@ -123,7 +144,7 @@ Thoughout the instructions we will assume your environment has the following val
 
 The instructions describing using the CLI for configuring the zone, but if you prefer you may use the web based portal instead.
 
-## Azure Private DNS service
+## Azure Private DNS Zones
 
 ### Creating the Zone
 
@@ -186,100 +207,56 @@ When the process completes (typically five to ten minutes) you will be [returned
 
 These are the IP addresses of the Azure hosted DNS proxies.
 
-To test everything is working, by running on a system using an IP you provided in `setup.hcl`, you should be able to run the following DNS proxies and see something like the following:
+To test everything is working, run on a system that has a listed IP in `setup.hcl`, you should be able to run the following against the IPs of the DNS proxies and see something like the following:
 
-    $ dig -c CH -t TXT version.server @192.0.2.4
+    $ dig -c CH TXT version.server @192.0.2.4
     "unbound 1.17.1"
 
 ### Access to the Private DNS Zones
 
+For the DNS proxies to be able to see your Azure Private DNS zones, you need to create [virtual network link(s)](https://learn.microsoft.com/en-us/azure/dns/private-dns-virtual-network-links) to link them to each of the private DNS zones (including the reverse ones).
 
+This is done by running:
 
-https://learn.microsoft.com/en-us/azure/dns/private-dns-virtual-network-links
-
-Once you have created the private zone(s), you need to create virtual network link(s) from the proxy resolver network back to each of the private DNS zones (including the reverse ones) you have created:
-
-    az network private-dns link vnet create --no-wait --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --zone-name example.com
-    az network private-dns link vnet create --no-wait --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --zone-name d.f.ip6.arpa
+    ID=$(az network vnet show --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name network --output tsv --query id)
+    
+    az network private-dns link vnet create --no-wait --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --virtual-network $ID --registration-enabled False --zone-name example.com
+    az network private-dns link vnet create --no-wait --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --virtual-network $ID --registration-enabled False --zone-name d.f.ip6.arpa
     az network private-dns link vnet create --no-wait ...
 
+Once you have imported the records, you should be able to test them using `dig` as follows:
 
-Once you have imported the records, you should be able to test them as detailed below.
+    $ dig @192.0.2.4 +noall +comments +answer SOA example.com
+    ;; Got answer:
+    ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 2616
+    ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+    
+    ;; OPT PSEUDOSECTION:
+    ; EDNS: version: 0, flags:; udp: 1232
+    ;; ANSWER SECTION:
+    example.com.		65	IN	SOA	azureprivatedns.net. azureprivatedns-host.microsoft.com. 1 3600 300 2419200 10
 
+Initially, the status in the comment section will be set to `REFUSED` (as it will for all unlinked zones) but after a minute or two you should start seeing status being set to `NOERROR` and the expected result coming through.
 
+If this does not work:
 
+  * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in the network security group (original set by `allowed_ips` in `setup.hcl`) using:
 
-Whilst following the below deploy process, early into it you may see it stall with something like the following message:
+        dig CH TXT whoami.cloudflare @1.1.1.1
+        dig CH TXT whoami.cloudflare @2606:4700:4700::1111
 
-    ==> azure-arm.main: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ABCD12345 to authenticate.
+  * check that a local firewall is not blocking you directly querying non-local DNS servers
+  * check there were no deployment errors, if there were, retry that process until there are no errors
 
-You should follow the instructions shown there to authorise the CLI tooling to perform tasks using your user credentials.
+## On-Premise Resolvers
 
-**N.B.** annoyingly you will need to do this twice, one immediately after the other but once done you should be able to walk away and get a coffee
-
-**N.B.** if you see an error stating `Cannot locate the managed image resource group ...` then try deleting `~/.azure/packer` and retrying
-
-**N.B.** ignore any `Duplicate required provider` warnings in regards to the `random_uuid` module, it is a bug in someone else's code we cannot work around and fortunately is harmless
-
-## Authoritative DNS (Cloud)
-
-Initially we need to build an image for our DNS proxy resolver to run in Azure, this is done with:
-
-    make build-proxy
-
-Once the image has been cooked, you can now deploy the infrastructure for this with:
-
-    make deploy
-
-**N.B.** if you append `DRYRUN=1` to the end, the process will run Terraform in `plan` mode instead of `apply` so no changes will be applied
-Where:
-
- * **`proxy-ipv6` and `proxy-ipv4`:** IPv6 and IPv4 addresses of the DNS proxy forwarders
-     * first IPv4 and first IPv6 address listed is assigned to the first proxy resolver, the second set to the second proxy resolver
-     * these IPs are used by your on-premises resolvers to gain access to the private view of your zone
-     * you should be able to SSH into these systems using:
-
-## Security
-
-You should not need to ever log into the proxy resolvers but as they are configured with a temporary SSH public key (`id_rsa` and `id_rsa.pub` would have been automatically created for you at the top of the project directory) you should perform the following steps on each system:
-
- 1. SSH into the server (from within the project directory) with:
-
-        ssh -i id_rsa ubuntu@192.0.2.1
-
- 1. create user accounts for yourself and anyone else who will be administrating the system
-
- 1. make sure you can log into the system (and gain `root` via `sudo -s`) using at least one of those accounts
-
- 1. delete the `ubuntu` account by running on the system
-
-        sudo userdel -r ubuntu
-
-**N.B.** you will need to redo this each time you update the domains list in `setup.hcl` as the VMs are rebuilt
-
-## Importing
-
-## Recursive DNS (On-Premises)
-
-Each on-premise environment is different, and forcing the administrator to use a given orchestration tool will not fly.
-
-Instead provided is a shell script ([`setup.resolver.sh`](./setup.resolver.sh)) that you should copy to a fresh recent Debian or Ubuntu based system and run there as `root` the following:
-
-    export DOMAINS=example.com,example.org
-    export NSS=192.0.2.1,192.0.2.241,2001:db8::1234,2001:db8::9876
-    sh setup.resolver.sh
-
-**N.B.** `DOMAINS` is a list of the domains comma separated you added to `setup.hcl` and `NSS` is the list of all the IPs returned comma separated for the Azure hosted DNS proxies
-
-The configuration installed will serve stale records for up to 24 hours (`/etc/unbound/unbound.conf.d/stale.conf`) in case there is a problem with reaching the upstream Azure hosted proxies.
-
-You may need to edit `/etc/unbound/unbound.conf.d/listen.conf` to add additional source IP ranges that can query your resolver.
+...
 
 ### Zone Delegations (`NS` records)
 
 Azure Private DNS [does not support zone delegations](https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions) so you need to configure unbound to do this on your behalf.
 
-**N.B.** it is recommended you do this on your on-premise recursive resolvers but you may decide for local reasons you want to do it on the proxy DNS systems
+**N.B.** it is recommended you do this on your on-premise recursive resolvers but you may decide for local reasons you want to do it on the DNS proxies
 
 As an example of how to do this, you may wish to add the following to `/etc/unbound/unbound.conf.d/delegations.conf`:
 
@@ -298,163 +275,15 @@ As an example of how to do this, you may wish to add the following to `/etc/unbo
         stub-addr: 192.0.2.101     # ns2.subdomain.example.com.
         stub-addr: 2001:db8::bbbb  # ns2.subdomain.example.com.
 
-# Usage and Testing
-
-This section will walk you through testing your service before putting it into production.
-
-We will assume your DNS zones (private and public) will be placed into the resource group 'DNS'.
-
-Points to be aware of:
-
- * externally, *only* records in the public view will be returned
- * internally, *only* records in the private view will be returned
-     * records from the public view do not back fill
-         * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
- * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
-     * so not `192.168.0.0/16` or `fd00::/8`
-
-## Public
-
-You need to create the public DNS zones manually using something like:
-
-    az network dns zone create --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name example.com
-    az network dns zone create ...
-
-You should also do the same for the reverse zones for any IP space allocated to you:
-
-    az network dns zone create --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name 8.b.d.0.1.0.0.2.ip6.arpa
-    az network dns zone create ...
-
-Once you have populated your public zone, then you should be able to see your expected result for it with:
-
-    dig @nsA-0Y.azure-dns.com server.example.com
-
-Where `nsA-0Y.azure-dns.com` is one of the entries from the `nameservers` output produced when you were creating that zone.
-
-## Private
-
-You need to create the DNS zones yourself manually using something like:
-
-    az network private-dns zone create --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name example.com
-    az network private-dns zone create ...
-
-You should also do the same for the reverse zones. A quick way to get the special use ones configured is to run:
-
-    az network private-dns zone create --only-show-errors --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name d.f.ip6.arpa
-    az network private-dns zone create --only-show-errors --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name 10.in-addr.arpa
-    az network private-dns zone create --only-show-errors --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name 168.192.in-addr.arpa
-    seq 16 31 | xargs -I{} -t az network private-dns zone create --only-show-errors --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name {}.172.in-addr.arpa
-
-Once you have created the private zones, you need to create virtual network links from the proxy resolver network back to each of the private DNS zones (including the reverse ones) you have created:
-
-    az network private-dns link vnet create --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --zone-name example.com
-    az network private-dns link vnet create --subscription 00000000-0000-0000-0000-000000000000 --resource-group DNS --name cloud-managed-dns --zone-name d.f.ip6.arpa
-    az network private-dns link vnet create ...
-
-First check that the proxy resolvers are working (they may take a few minutes to start for the first time) by running the following command from a workstation holding one of the IP addresses you listed in `allowed_ips` earlier in `setup.hcl`:
-
-  dig @51.145.109.112 +short -c CH -t TXT version.server
-    dig @192.0.2.4 SOA example.com
-
-Where `192.0.2.4` is one of the IPs return earlier in `proxy-ipv6` and `proxy-ipv4`.
-
-The output should look like the following, where if you see `azureprivatedns.net.` then everything is working:
-
-    ; <<>> DiG 9.16.27-Debian <<>> @192.0.2.4 SOA example.com
-    ; (1 server found)
-    ;; global options: +cmd
-    ;; Got answer:
-    ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 23510
-    ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
-    
-    ;; OPT PSEUDOSECTION:
-    ; EDNS: version: 0, flags:; udp: 1232
-    ;; QUESTION SECTION:
-    ;example.com.                    IN      SOA
-    
-    ;; ANSWER SECTION:
-    example.com.             1800    IN      SOA     azureprivatedns.net. azureprivatedns-host.microsoft.com. 1 3600 300 2419200 10
-    
-    ;; Query time: 36 msec
-    ;; SERVER: 192.0.2.4#53(192.0.2.4)
-    ;; WHEN: Tue May 10 16:09:27 BST 2022
-    ;; MSG SIZE  rcvd: 128
-
-If it does not work:
-
-  * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in `allowed_ips` using:
-
-        dig CH TXT whoami.cloudflare @1.1.1.1
-        dig CH TXT whoami.cloudflare @2606:4700:4700::1111
-  * check that a local firewall is not blocking you directing querying non-local DNS servers
-  * check there were no deployment errors, if there were, retry that process until there are no errors
-
-If you have populated your private zone, then you should be able to see your expected result for it with:
-
-    dig @192.0.2.4 server.example.com
-
-**N.B.** any query not for your domains the proxy will return a `REFUSED` status and no results.
-
-### From the Proxy
-
-If you are SSHed into the proxy resolver, you instead would use:
-
-    dig @168.63.129.16 server.example.com
-
-**N.B.** do not change [`168.63.129.16` here as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
-
-## Placing into Production
-
-FIXME...
-
- * **`nameservers`:** nameservers to use when going live for your domain
-     * instruct your domain name registrar to set the NS records of your domain to the values returned for your deployment
-
-# Monitoring
-
-...[work in progress](https://github.com/corememltd/cloud-managed-dns/issues/1)
-
-# Decommissioning
-
-**N.B.** Works in Progress
-
-To remove the in production deployment, simply run from within the project directory:
-
-    make undeploy
-
-A few items are purposely protected and will require manual deletion:
-
- * Azure DNS (public) hosting
-     * nameservers entries will change when re-created, mismatches what you told the domain name registrar to use, your domain is now dead for typically 48 hours until DNS propagation completes
-     * retained so you may just re-use the existing resource with no outage
- * public IPv4 and IPv6 addresses of the proxy resolvers
-     * by recycling the resources you do not need to reconfigure any on-premises resolvers
-
-If you really want to remove these resources, delete them via the web portal or CLI.
-
-**N.B.** do *not* delete the `terraform.tfstate` file unless you have deleted the whole resource group
-
-## Multiple Administrators
-
-If you are going to be the only administrator tasked with provisioning and/or decommissioning the service (this is *not* the same as administrators of the zone files) you may ignore this section.
-
-This project uses Terraform which unfortunately needs to store information locally that describes the existing cloud deployment, it does this by storing its state in a file named `terraform.tfstate`.
-
-Only a single person may use the deploy and decommissioning process below at a time, and when doing so you must pass around the latest version of the `terraform.tfstate` around your team. There are several ways that you may use in which to do this, and of course every team is different, but I would recommend either:
-
- * [recommended] store the [`.tfstate` file in Azure Storage](https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli)
- * fork this project, edit `.gitignore` to no longer ignore `terraform.tfstate` by adding `!terraform.tfstate` *after* the existing `terraform.tfstate*` entry, commit the state to the project
- * store the file on some networking resource (eg. Microsoft Windows/Samba share, NFS, SFTP, Dropbox, ...)
-
 # Troubleshooting
 
 ## Accessing the DNS Proxies
 
-To initially access the proxy, you use the [serial port](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/serial-console-overview)
+To initially access the proxy, you use the [serial port](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/serial-console-overview) which requires a local extension:
 
     az extension add --name serial-console --upgrade
 
-To enable the serial console, run the following:
+To enable the serial console on the VMs, run the following:
 
     az vm boot-diagnostics enable --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0
     az vm boot-diagnostics enable --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-1
@@ -465,7 +294,7 @@ Now to access the serial port (of `dns-proxy-0`) run:
 
 Log in as `root`, no password is required; do not freak out as SSH is configured with `PermitRootLogin no` and `PasswordAuthentication no` whilst `/etc/securetty` only allows the console and serial port.
 
-Using the serial port is somewhat slow (and glitchy if you are unfamilar with the process) so using this access you should arrange SSH access for youself:
+Using the serial port is somewhat slow (and glitchy if you are unfamiliar with the process) so using this access you should arrange SSH access for yourself:
 
  1. create yourself a user:
 
@@ -492,3 +321,11 @@ You should now be able to SSH into the system either directly by IP or using:
     az ssh vm --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0 --local-user bob
 
 Remember to log out of the serial console one you have finished (typing `exit` or `logout` until you see the login prompt) and then disconnect by pressing `Ctrl`+`]` followed by `q`.
+
+## DNS Resolution From the Proxies
+
+If you have SSHed into one of the the proxy resolvers, when using `dig` you instead would use:
+
+    dig @168.63.129.16 SOA example.com
+
+**N.B.** do not change [`168.63.129.16` here as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
