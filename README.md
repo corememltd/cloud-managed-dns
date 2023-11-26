@@ -88,9 +88,8 @@ Now edit `setup.hcl` to set at least the following to your needs:
      * it is recommended you deploy to the nearest location possible to your on-premise deployment
      * if you have several global sites, then you can deploy this service multiple times and they will act independently of one another
  * **`size` (default `Standard_B2ts_v2`):** instance size to use for Azure proxy DNS systems
-     * suitable choices are `Standard_B1ls` (~$5/month), `Standard_B2ts_v2` (~$10/month), `Standard_B2pts_v2` and `Standard_B2ats_v2` (~$15/month)
-        * if you use an ARM64 system (eg. `Standard_B2pts_v2`) then you also must update `image_sku` in `setup.pkr.hcl` to be `12-arm64`
-     * unscientific benchmarking with `dnsperf` against a `Standard_B2pts_v2` benchmarks at ~15krps
+     * suitable options are `Standard_B1ls` (~$5/month), `Standard_B2ts_v2` (~$10/month) and `Standard_B2ats_v2` (~$10/month)
+     * unscientific benchmarking with `dnsperf` against a `Standard_B2ts_v2` benchmarks above 10krps
         * remember this is only for resolving your local private zone and your actual demands are going to be far lower still as the on-premise resolver will cache results
         * most deployments should expect the order of 100rps initially when restaring the on-premise resolver and then once the cache warms up dropping to less than 10rps
  * **`allowed_ips`:** this must encompass at least the (public) IPs of your on-premises DNS resolvers
