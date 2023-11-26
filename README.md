@@ -209,7 +209,7 @@ These are the IP addresses of the Azure hosted DNS proxies.
 
 To test everything is working, run on a system that has a listed IP in `setup.hcl`, you should be able to run the following against the IPs of the DNS proxies and see something like the following:
 
-    $ dig -c CH TXT version.server @192.0.2.4
+    $ dig CH TXT version.server @192.0.2.4
     "unbound 1.17.1"
 
 ### Access to the Private DNS Zones
