@@ -19,6 +19,7 @@ apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-conf
 	git \
 	python3-dnspython \
 	python3-unbound \
+	unattended-upgrades \
 	unbound
 
 apt-get -y autoremove
