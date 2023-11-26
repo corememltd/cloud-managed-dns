@@ -68,7 +68,7 @@ def operate(module_id, event, qstate, qdata):
         return True
 
     if qstate.qinfo.qclass != RR_CLASS_IN:
-        return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED)
+        return _error(module_id, event, qstate, qdata, peer, RCODE_NOTIMPL, 'unsupported')
 
     qname = qstate.qinfo.qname_str.lower()
     query = dns.message.make_query(qname=qname, rdtype=SOA)
