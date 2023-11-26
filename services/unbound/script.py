@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Azure Unbound module to infer when a zone is private and linked
+# Copyright (C) 2023, coreMem Limited <info@coremem.com>
+# SPDX-License-Identifier: AGPL-3.0-only
+
 # PYTHONPATH is just a tirefire...
 # https://github.com/NLnetLabs/unbound/issues/769
 sys.path.insert(0, '/usr/lib/python3/dist-packages/')
