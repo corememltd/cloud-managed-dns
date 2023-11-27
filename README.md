@@ -281,11 +281,58 @@ Once built and ready, you need to install `unbound` using:
 
    sudo apt install unbound
 
+Now we need to configure the [resolver appropriately](https://unbound.docs.nlnetlabs.nl/en/latest/use-cases/home-resolver.html):
+
+ 1. create `/etc/unbound/unbound.conf.d/listen.conf` and populate it with your internal IP ranges similarly to:
+
+        server:
+        
+            interface: 0.0.0.0
+            interface: ::
+            
+            access-control: 127.0.0.0/8 allow_snoop
+            access-control: ::1 allow_snoop
+            
+            access-control: 10.0.0.0/8 allow
+            access-control: 172.16.0.0/12 allow
+            access-control: 192.168.0.0/16 allow
+            access-control: fc00::/7 allow
+
+ 1. use `cloud-managed-dns.conf.example` in this project to create `/etc/unbound/unbound.conf.d/cloud-managed-dns.conf` and amend this file accordingly:
+
+     * replace `example.com` with one of the zone names of your private DNS zones
+     * update all instances of the listed IP addresses with those returned in the output of when you ran Terraform earlier
+     * duplicate `domain-insecure` and the whole `forward-zone` section for each of your private DNS zones
+
+ 1. if you wish to use an upstream DNS resolving service (such as [Cloudflare](https://developers.cloudflare.com/1.1.1.1/ip-addresses/) and its 'family' service) then create `/etc/unbound/unbound.conf.d/upstream.conf` and populate it with:
+
+        server:
+        
+            # only uncomment this if your upstream provides security for your
+            # site and it is useful to provide them with the actual client IP
+            # to aid discovery of affected systems at the cost of privacy
+            #module-config: "subnetcache validator iterator"
+            #max-client-subnet-ipv6: 128
+            #max-client-subnet-ipv4: 32
+            #send-client-subnet: 1.1.1.1
+            #send-client-subnet: 2606:4700:4700::1111
+            #send-client-subnet: 1.0.0.1
+            #send-client-subnet: 2606:4700:4700::1001
+        
+        forward-zone:
+            
+            name: "."
+            
+            forward-addr: 1.1.1.1
+            forward-addr: 2606:4700:4700::1111
+            forward-addr: 1.0.0.1
+            forward-addr: 2606:4700:4700::1001
+
 ### Zone Delegations (`NS` records)
 
 Azure Private DNS [does not support zone delegations](https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions) so you need to configure unbound to do this on your behalf.
 
-**N.B.** it is recommended you do this on your on-premise recursive resolvers but you may decide for local reasons you want to do it on the DNS proxies
+**N.B.** it is recommended you do this on your on-premise recursive resolvers but you could if needed do this on the Azure hosted DNS proxies though this is discouraged
 
 As an example of how to do this, you may wish to add the following to `/etc/unbound/unbound.conf.d/delegations.conf`:
 
@@ -293,12 +340,16 @@ As an example of how to do this, you may wish to add the following to `/etc/unbo
     # https://learn.microsoft.com/en-us/azure/dns/private-dns-privatednszone#restrictions
     # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-stub
     server:
+    
         domain-insecure: "subdomain.example.com."
     
     # dig NS subdomain.example.com @ns2.subdomain.example.com.
     stub-zone:
-        name: subdomain.example.com
+    
+        name: "subdomain.example.com"
+        
         stub-prime: yes
+        
         stub-addr: 192.0.2.100     # ns1.subdomain.example.com.
         stub-addr: 2001:db8::aaaa  # ns1.subdomain.example.com.
         stub-addr: 192.0.2.101     # ns2.subdomain.example.com.

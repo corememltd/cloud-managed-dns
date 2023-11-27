@@ -1,0 +1,253 @@
+server:
+
+    # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-serve-expired
+    serve-expired: yes
+    serve-expired-ttl: 86400
+    serve-expired-client-timeout: 1800
+
+    # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#term-domain-insecure-domain-name
+    # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#forward-zone-options
+    domain-insecure: "example.com."
+    # 10.0.0.0/8
+    domain-insecure: "10.in-addr.arpa."
+    # 172.16.0.0/12
+    domain-insecure: "16.172.in-addr.arpa."
+    domain-insecure: "17.172.in-addr.arpa."
+    domain-insecure: "18.172.in-addr.arpa."
+    domain-insecure: "19.172.in-addr.arpa."
+    domain-insecure: "20.172.in-addr.arpa."
+    domain-insecure: "21.172.in-addr.arpa."
+    domain-insecure: "22.172.in-addr.arpa."
+    domain-insecure: "23.172.in-addr.arpa."
+    domain-insecure: "24.172.in-addr.arpa."
+    domain-insecure: "25.172.in-addr.arpa."
+    domain-insecure: "26.172.in-addr.arpa."
+    domain-insecure: "27.172.in-addr.arpa."
+    domain-insecure: "28.172.in-addr.arpa."
+    domain-insecure: "29.172.in-addr.arpa."
+    domain-insecure: "30.172.in-addr.arpa."
+    domain-insecure: "31.172.in-addr.arpa."
+    # 192.168.0.0/16
+    domain-insecure: "168.192.in-addr.arpa."
+    # fd00::/8
+    domain-insecure: "d.f.ip6.arpa."
+
+forward-zone:
+
+    name: "example.com."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "10.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "16.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "17.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "18.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "19.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "20.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "21.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "22.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "23.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "24.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "25.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "26.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "27.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "28.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "29.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "30.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "31.172.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "168.192.in-addr.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
+
+forward-zone:
+
+    name: "d.f.ip6.arpa."
+
+    # dns-proxy-0
+    forward-addr: 192.0.2.4
+    forward-addr: 2001:db8:100:8::43
+    # dns-proxy-1:
+    forward-addr: 192.0.2.79
+    forward-addr: 2001:db8:100:8::2e
