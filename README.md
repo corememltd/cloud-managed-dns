@@ -298,7 +298,7 @@ Now we need to configure the [resolver appropriately](https://unbound.docs.nlnet
             access-control: 192.168.0.0/16 allow
             access-control: fc00::/7 allow
 
- 1. use `cloud-managed-dns.conf.example` in this project to create `/etc/unbound/unbound.conf.d/cloud-managed-dns.conf` and amend this file accordingly:
+ 1. use [`cloud-managed-dns.conf.example`](./cloud-managed-dns.conf.example) in this project to create `/etc/unbound/unbound.conf.d/cloud-managed-dns.conf` and amend this file accordingly:
 
      * replace `example.com` with one of the zone names of your private DNS zones
      * update all instances of the listed IP addresses with those returned in the output of when you ran Terraform earlier
