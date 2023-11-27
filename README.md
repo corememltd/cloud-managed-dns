@@ -1,6 +1,6 @@
 Deploy and managed your authoritative DNS service with your cloud provider (currently only Azure) with support for [split-horizon DNS](https://en.wikipedia.org/wiki/Split-horizon_DNS) and on-premise recursive resolvers.
 
-This project is only of use to those looking to host their [private/internal zone](https://en.wikipedia.org/wiki/Split-horizon_DNS) in Azure and being able to query it on-premise. You should also be aware of the [per-request costs for using Azure DNS](https://azure.microsoft.com/en-in/pricing/details/dns/) before embarking on this project as well as the infrastructure costs of the deployment (~$50/month).
+This project is only of use to those looking to host their [private/internal zone](https://en.wikipedia.org/wiki/Split-horizon_DNS) in Azure and being able to query it on-premise. You should also be aware of the [per-request costs for using Azure DNS](https://azure.microsoft.com/en-in/pricing/details/dns/) before embarking on this project as well as the infrastructure costs of the deployment (roughly $30/month).
 
 The expected DNS infrastructure topology this project supports is:
 
@@ -97,10 +97,10 @@ Now edit `setup.hcl` to set at least the following to your needs:
      * it is recommended you deploy to the nearest location possible to your on-premise deployment
      * if you have several global sites, then you can deploy this service multiple times and they will act independently of one another
  * **`size` (default `Standard_B2ts_v2`):** instance size to use for Azure proxy DNS systems
-     * suitable options are `Standard_B2ts_v2` (~$10/month) and `Standard_B2ats_v2` (~$10/month)
-     * unscientific bench marking with `dnsperf` against a `Standard_B2ts_v2` benchmarks ~10krps
+     * suitable options are `Standard_B2ts_v2` (roughly $10/month) and `Standard_B2ats_v2` (roughly $10/month)
+     * unscientific bench marking with `dnsperf` against a `Standard_B2ts_v2` instance provides of the order of 10krps
         * remember this is only for resolving your local private zone and your actual demands are going to be far lower still as the on-premise resolver will cache results
-        * most deployments should expect the order of 100rps initially when restarting the on-premise resolver and then once the cache warms up dropping to less than 10rps
+        * most deployments should expect the order of 100rps initially when restarting the on-premise resolver and then once the cache warms up dropping to less than 10rps (ie. 100x to 1000x less load!)
  * **`allowed_ips`:** this must encompass at least the (public) IPs of your on-premises DNS resolvers
      * if you are using [NAT](https://en.wikipedia.org/wiki/Network_address_translation) do *not* list your internal on-premise addresses as those will not be seen by Azure, you must use the public IP(s) of your NAT
 
@@ -250,7 +250,36 @@ If this does not work:
 
 ## On-Premise Resolvers
 
-...
+This part walks you though configuring Unbound, but the configuration here can be applied to any vendor DNS resolver software of your choosing.
+
+To build a suitable on-premise Unbound resolver, start by creating a VM using the following:
+
+ * running Debian 'bookworm' 12
+    * if you prefer a Ubuntu LTS release instead, then do use that instead
+ * 1GiB RAM
+ * two (2) vCPU cores
+ * 30GiB of disk space
+
+It is strongly recommended you also:
+
+ * use `sudo` and add your regular users to the `sudo` group (never log into the system directly as `root`)
+ * edit `/etc/ssh/sshd_config` setting `PermitRootLogin no` and `PasswordAuthentication no`
+ * use `/etc/securetty` only allows the console and serial port, which you can configure by running:
+
+       cat <<'EOF' | sudo tee /etc/securetty >/dev/null
+       console
+       ttyS0
+       EOF
+
+   Now add to the top of `/etc/pam.d/login`:
+
+       auth [success=1 default=ignore] pam_securetty.so
+
+   With this inplace you may *optionally* wish to remove the password from the `root` account using `passwd -d root` but your own preferences may dictate otherwise.
+
+Once built and ready, you need to install `unbound` using:
+
+   sudo apt install unbound
 
 ### Zone Delegations (`NS` records)
 
@@ -320,12 +349,14 @@ You should now be able to SSH into the system either directly by IP or using:
 
     az ssh vm --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name dns-proxy-0 --local-user bob
 
-Remember to log out of the serial console one you have finished (typing `exit` or `logout` until you see the login prompt) and then disconnect by pressing `Ctrl`+`]` followed by `q`.
+Remember to log out of the serial console once you have finished (typing `exit`, `logout` or `Ctrl-D` until you see the login prompt) and then disconnect by pressing `Ctrl-]` followed by `q`.
 
 ## DNS Resolution From the Proxies
 
 If you have SSHed into one of the the proxy resolvers, when using `dig` you instead would use:
 
-    dig @168.63.129.16 SOA example.com
+    dig @127.0.0.1 SOA example.com
 
-**N.B.** do not change [`168.63.129.16` here as it is Azure's DNS server for local systems](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
+To bypass the DNS proxy and speak directly to Azure's DNS service, you should point your request at [`168.63.129.16`]https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16() instead use:
+
+    dig @168.63.129.16 SOA example.com
