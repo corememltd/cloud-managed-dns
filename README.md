@@ -275,7 +275,7 @@ It is strongly recommended you also:
 
        auth [success=1 default=ignore] pam_securetty.so
 
-   With this inplace you may *optionally* wish to remove the password from the `root` account using `passwd -d root` but your own preferences may dictate otherwise.
+   With this in place you may *optionally* wish to remove the password from the `root` account using `passwd -d root` but your own preferences may dictate otherwise.
 
 Once built and ready, you need to install `unbound` using:
 
@@ -408,6 +408,6 @@ If you have SSHed into one of the the proxy resolvers, when using `dig` you inst
 
     dig @127.0.0.1 SOA example.com
 
-To bypass the DNS proxy and speak directly to Azure's DNS service, you should point your request at [`168.63.129.16`]https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16() instead use:
+To bypass the DNS proxy and speak directly to Azure's DNS service, you should point your request at [`168.63.129.16`](https://docs.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16) instead use:
 
     dig @168.63.129.16 SOA example.com
