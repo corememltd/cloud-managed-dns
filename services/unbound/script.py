@@ -11,8 +11,10 @@ sys.path.insert(0, '/usr/lib/python3/dist-packages/')
 import random
 import time
 from dns.exception import Timeout
+import dns.name
 import dns.query
 from dns.rcode import NOERROR, NXDOMAIN
+from dns.rdataclass import IN
 from dns.rdatatype import SOA
 
 def _peer(qstate):
@@ -68,7 +70,7 @@ def operate(module_id, event, qstate, qdata):
     if qstate.qinfo.qclass != RR_CLASS_IN:
         return _error(module_id, event, qstate, qdata, peer, RCODE_NOTIMPL, 'unsupported')
 
-    qname = qstate.qinfo.qname_str.lower()
+    qname = dns.name.from_text(qstate.qinfo.qname_str.lower())
     query = dns.message.make_query(qname=qname, rdtype=SOA)
     response = None
     for i in range(3):
@@ -82,7 +84,14 @@ def operate(module_id, event, qstate, qdata):
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, 'timeout')
     if response.rcode() not in (NOERROR, NXDOMAIN):
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({response.rcode().name})')
-    if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname == 'azureprivatedns.net.'):
+
+    soa = response.get_rrset(response.answer, qname, IN, SOA)
+    if soa is None:
+        for rrset in response.authority:
+            if rrset[0].rdtype == SOA:
+                soa = rrset
+                break
+    if not (soa and str(soa[0].mname) == 'azureprivatedns.net.'):
         return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED, 'refused')
 
     log_info(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str}')
