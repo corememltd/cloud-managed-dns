@@ -82,7 +82,7 @@ def operate(module_id, event, qstate, qdata):
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, 'timeout')
     if response.rcode() not in (NOERROR, NXDOMAIN):
         return _error(module_id, event, qstate, qdata, peer, RCODE_SERVFAIL, f'error ({response.rcode().name})')
-    if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname != 'azureprivatedns.net.'):
+    if not (len(response.answer) == 1 and response.answer[0][0].rdtype == SOA and response.answer[0][0].mname == 'azureprivatedns.net.'):
         return _error(module_id, event, qstate, qdata, peer, RCODE_REFUSED, 'refused')
 
     log_info(f'cloud-managed-dns: peer={peer} name={qstate.qinfo.qname_str} class={qstate.qinfo.qclass_str} type={qstate.qinfo.qtype_str}')
