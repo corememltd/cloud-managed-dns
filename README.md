@@ -189,7 +189,11 @@ First we build the virtual machine image by running the following:
 
 **N.B.** it is safe here to ignore the 'target' related warnings when running `terraform`
 
-After some time (typically five to ten minutes) it should complete building the OS image to be used by the DNS proxies.
+After some time (typically five to ten minutes) it should complete building the OS image to be used by the DNS proxies. You should check that an image has been created by either looking via the web portal in the resource group for an image called `dns-proxy` or by running the following and verifying it returns details about the image and not an error:
+
+    az image show --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --image-name dns-proxy
+
+**N.B.** if there is no image, reinspect the output of running the `packer build ...` command as it likely failed in some way
 
 Now we deploy the entire infrastructure using:
 
