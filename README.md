@@ -171,7 +171,7 @@ You now need to populate your Azure DNS zone(s) with records. You can do this ma
 
 To use this you will need a copy of your zone as a traditional BIND zone file, your existing authoritative DNS server (check the vendor documentation!) should let you generate one via an AXFR query using something like:
 
-    dig AXFR @192.0.2.1 example.com | tee example.com.axfr
+    dig +onesoa AXFR @192.0.2.1 example.com | tee example.com.axfr
 
 **N.B.** you may need to grant yourself permission on the server to be able to do a zone transfer, but this process is out of scope to this document
 
