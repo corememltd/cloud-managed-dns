@@ -134,7 +134,7 @@ The deployment of the service has several parts that are tackled in the followin
  1. Azure hosted DNS proxies
  1. On-premise resolvers
 
-Throughout the instructions we will assume your environment has the following values:
+Throughout the instructions we will assume your environment has the following values (as set it your `setup.hcl` file above where it overlaps):
 
  * the Azure Subscription you are deploying into has the value `00000000-0000-0000-0000-000000000000`
  * the Azure location you wish to deploy to is `uksouth`
@@ -175,7 +175,7 @@ To use this you will need a copy of your zone as a traditional BIND zone file, y
 
 **N.B.** you may need to grant yourself permission on the server to be able to do a zone transfer, but this process is out of scope to this document
 
-Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the view you are importing:
+Once you have a zone file, you can import it using (replacing the `-n` and `-f` parameters) depending on the zone you are importing:
 
     az network private-dns zone import --subscription 00000000-0000-0000-0000-000000000000 --resource-group cloud-managed-dns --name example.com --file-name example.com.axfr
 
@@ -216,6 +216,16 @@ To test everything is working, run on a system that has a listed IP in `setup.hc
     $ dig CH TXT version.server @192.0.2.4
     "unbound 1.17.1"
 
+If this does not work:
+
+  * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in the network security group (original set by `allowed_ips` in `setup.hcl`) using:
+
+        dig CH TXT whoami.cloudflare @1.1.1.1
+        dig CH TXT whoami.cloudflare @2606:4700:4700::1111
+
+  * check that a local firewall is not blocking you directly querying non-local DNS servers
+  * check there were no deployment errors, if there were, retry that process until there are no errors
+
 ### Access to the Private DNS Zones
 
 For the DNS proxies to be able to see your Azure Private DNS zones, you need to create [virtual network link(s)](https://learn.microsoft.com/en-us/azure/dns/private-dns-virtual-network-links) to link them to each of the private DNS zones (including the reverse ones).
@@ -241,16 +251,6 @@ Once you have imported the records, you should be able to test them using `dig` 
     example.com.		65	IN	SOA	azureprivatedns.net. azureprivatedns-host.microsoft.com. 1 3600 300 2419200 10
 
 Initially, the status in the comment section will be set to `REFUSED` (as it will for all unlinked zones) but after a minute or two you should start seeing status being set to `NOERROR` and the expected result coming through.
-
-If this does not work:
-
-  * verify your [external IP for the workstation](https://developers.cloudflare.com/1.1.1.1/) is in the network security group (original set by `allowed_ips` in `setup.hcl`) using:
-
-        dig CH TXT whoami.cloudflare @1.1.1.1
-        dig CH TXT whoami.cloudflare @2606:4700:4700::1111
-
-  * check that a local firewall is not blocking you directly querying non-local DNS servers
-  * check there were no deployment errors, if there were, retry that process until there are no errors
 
 ## On-Premise Resolvers
 
