@@ -28,7 +28,7 @@ Points to be aware of:
  * externally (ie. 'Internet User' on the right), *only* records in the public view will be returned
  * internally (ie. 'On-Premise' on the left), *only* records in the private view will be returned
      * records from the public view do not back fill into the private zone
-         * this functionality is available in DNS Wingman (send enquires to info@coremem.com)
+         * this functionality is available in [DNS Wingman](https://dnswingman.com/) and for more important send enquires to info@dnswingman.com
  * generally you should not put [special use IPs (RFC6890)](https://www.rfc-editor.org/rfc/rfc6890) into the public view
      * so not `192.168.0.0/16` or `fd00::/8`
 
